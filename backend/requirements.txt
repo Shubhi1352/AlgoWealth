@@ -5,6 +5,7 @@ uvicorn[standard]==0.30.6
 # Config & validation
 pydantic==2.9.2
 pydantic-settings==2.5.2
+pydantic[email]==2.9.2
 
 # Database
 motor==3.6.0          # Async MongoDB driver
