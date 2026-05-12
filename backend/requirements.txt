@@ -25,6 +25,9 @@ langsmith==0.1.129
 openai==1.51.0
 sentence-transformers==3.3.1
 
+# Finance
+finnhub-python==2.4.20
+
 # Vector DB
 qdrant-client==1.11.3
 

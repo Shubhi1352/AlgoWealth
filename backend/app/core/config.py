@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     # ── Tavily ────────────────────────────────────────────────────────────────
     TAVILY_API_KEY: str = ""
 
+    # ── FinnHub ─────────────────────────────────────────────────────────
+    FINNHUB_API_KEY: str = ""
+
     # ── LangSmith ────────────────────────────────────────────────────────────
     LANGCHAIN_TRACING_V2: bool = True
     LANGCHAIN_API_KEY: str = ""

@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from app.core.dependencies import get_current_user_id
 from app.agents.graph import trading_graph
+from app.services.portfolio_service import execute_trade
 
 router = APIRouter()
 
@@ -28,6 +29,7 @@ class AnalysisResponse(BaseModel):
     news_signal: dict
     fundamental_signal: dict
     technical_signal: dict
+    trade_executed: bool = False
 
 
 @router.post("/analyze", response_model=AnalysisResponse)
@@ -61,6 +63,26 @@ async def analyze_stock(
             "next": "",
         })
 
+        transaction = None
+        if result["decision"] in ("BUY", "SELL"):
+            try:
+                transaction = await execute_trade(
+                    user_id=user_id,
+                    ticker=ticker,
+                    action=result["decision"],
+                    confidence=result["confidence"],
+                    agent_reasoning={
+                        "decision": result["decision"],
+                        "confidence": result["confidence"],
+                        "reasoning": result["reasoning"],
+                        "news_signal": result["news_signal"],
+                        "technical_signal": result["technical_signal"],
+                        "fundamental_signal": result["fundamental_signal"],
+                    },
+                )
+            except Exception as e:
+                print(f"  ⚠️ Trade execution failed: {type(e).__name__}: {e}")
+
         return AnalysisResponse(
             ticker=ticker,
             decision=result["decision"],
@@ -69,6 +91,7 @@ async def analyze_stock(
             news_signal=result["news_signal"],
             fundamental_signal=result["fundamental_signal"],
             technical_signal=result["technical_signal"],
+            trade_executed=transaction is not None,
         )
 
     except Exception as e:
