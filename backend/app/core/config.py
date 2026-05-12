@@ -40,10 +40,10 @@ class Settings(BaseSettings):
     REDIS_PRICE_TTL: int = 300    # 5 minutes
     REDIS_NEWS_TTL: int = 3600    # 1 hour
 
-    # ── OpenAI ────────────────────────────────────────────────────────────────
-    OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-4o"
-    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    # ── GROQ ────────────────────────────────────────────────────────────────
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_EMBEDDING_MODEL: str = "llama-3.2-3b-preview"
 
     # ── Tavily ────────────────────────────────────────────────────────────────
     TAVILY_API_KEY: str = ""
