@@ -13,6 +13,7 @@ from app.agents.graph import trading_graph
 from app.services.portfolio_service import execute_trade
 from app.models.stock import StockDetail, CandleData
 from app.services.stock_service import get_stock_detail, get_candles
+from app.core.market_hours import get_market_status
 
 router = APIRouter()
 
@@ -101,6 +102,16 @@ async def analyze_stock(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Analysis failed: {str(e)}",
         ) from e
+
+
+@router.get("/market/status")
+async def market_status() -> dict:
+    """
+    Returns current NYSE market status.
+    No auth required — public information.
+    Called by the frontend to show open/closed indicator.
+    """
+    return get_market_status()
 
 
 @router.get("/{ticker}", response_model=StockDetail)
