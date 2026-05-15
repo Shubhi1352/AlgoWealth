@@ -16,6 +16,13 @@ from app.db.mongodb import get_database
 # Extracts the Bearer token from the Authorization header automatically
 _bearer_scheme = HTTPBearer()
 
+def get_db():
+    """
+    FastAPI dependency that returns the MongoDB database instance.
+    Injected into any route that needs direct DB access.
+    """
+    return get_database()
+
 
 async def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),

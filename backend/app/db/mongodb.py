@@ -26,6 +26,22 @@ def get_database() -> AsyncIOMotorDatabase:
     return get_client()[settings.MONGODB_DB_NAME]
 
 
+async def create_indexes() -> None:
+    """
+    Create compound indexes on all watchlist collections.
+    Called once at startup — MongoDB skips creation if index already exists,
+    so this is safe to call every time the app boots.
+    """
+    db = get_database()
+    for collection_name in ["automated_watchlist", "watchlist_a", "watchlist_b"]:
+        await db[collection_name].create_index(
+            [("user_id", 1), ("ticker", 1)],
+            unique=True,
+            background=True,
+        )
+    print("✅ MongoDB indexes created")
+
+
 async def connect_db() -> None:
     """
     Initialize the MongoDB connection pool.
@@ -39,6 +55,8 @@ async def connect_db() -> None:
     # Verify connection is actually alive
     await _client.admin.command("ping")
     print(f"✅ Connected to MongoDB: {settings.MONGODB_URL}")
+
+    await create_indexes()
 
 
 async def disconnect_db() -> None:
