@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     # ── FinnHub ─────────────────────────────────────────────────────────
     FINNHUB_API_KEY: str = ""
 
+    # ── TwelveData ─────────────────────────────────────────────────────────
+    TWELVE_DATA_API_KEY: str = ""
+
     # ── LangSmith ────────────────────────────────────────────────────────────
     LANGCHAIN_TRACING_V2: bool = True
     LANGCHAIN_API_KEY: str = ""

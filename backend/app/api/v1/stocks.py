@@ -11,6 +11,8 @@ from pydantic import BaseModel
 from app.core.dependencies import get_current_user_id
 from app.agents.graph import trading_graph
 from app.services.portfolio_service import execute_trade
+from app.models.stock import StockDetail, CandleData
+from app.services.stock_service import get_stock_detail, get_candles
 
 router = APIRouter()
 
@@ -99,3 +101,34 @@ async def analyze_stock(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Analysis failed: {str(e)}",
         ) from e
+
+
+@router.get("/{ticker}", response_model=StockDetail)
+async def get_stock(
+    ticker: str,
+    user_id: str = Depends(get_current_user_id),
+) -> StockDetail:
+    """
+    Get live quote + company info for a ticker.
+    Price is Redis-cached for 5 minutes.
+    """
+    return await get_stock_detail(ticker)
+
+
+@router.get("/{ticker}/chart", response_model=CandleData)
+async def get_stock_chart(
+    ticker: str,
+    resolution: str = "D",    # Query param: ?resolution=D
+    days: int = 90,            # Query param: ?days=90
+    user_id: str = Depends(get_current_user_id),
+) -> CandleData:
+    """
+    Get OHLCV candlestick data for charting.
+
+    Query params:
+      resolution: D (daily), W (weekly), 60 (1hr), 15 (15min)
+      days:       history window in days (default 90, max 365)
+    """
+    # Cap days to prevent massive responses
+    days = min(days, 365)
+    return await get_candles(ticker, resolution, days)
