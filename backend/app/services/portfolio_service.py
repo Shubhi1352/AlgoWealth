@@ -31,6 +31,7 @@ async def execute_trade(
     action: str,
     confidence: float,
     agent_reasoning: dict,
+    db=None,
 ) -> Transaction:
     """
     Execute a paper trade based on agent decision.
@@ -51,7 +52,8 @@ async def execute_trade(
     Raises:
         ValueError: If insufficient balance or invalid action.
     """
-    db = get_database()
+    if db is None:
+        db = get_database()
 
     # ── Fetch current price ───────────────────────────────────────────────────
     price = await get_stock_price(ticker)

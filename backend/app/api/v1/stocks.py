@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from app.core.dependencies import get_current_user_id
-from app.agents.graph import trading_graph
+from app.agents.graph import trading_graph, run_agent_pipeline
 from app.services.portfolio_service import execute_trade
 from app.models.stock import StockDetail, CandleData
 from app.services.stock_service import get_stock_detail, get_candles
@@ -52,19 +52,7 @@ async def analyze_stock(
         )
 
     try:
-        # Invoke the LangGraph pipeline with initial state
-        result = await trading_graph.ainvoke({
-            "ticker": ticker,
-            "user_id": user_id,
-            "messages": [],
-            "news_signal": {},
-            "fundamental_signal": {},
-            "technical_signal": {},
-            "decision": None,
-            "confidence": 0.0,
-            "reasoning": "",
-            "next": "",
-        })
+        result = await run_agent_pipeline(ticker=ticker, user_id=user_id)
 
         transaction = None
         if result["decision"] in ("BUY", "SELL"):
@@ -74,14 +62,7 @@ async def analyze_stock(
                     ticker=ticker,
                     action=result["decision"],
                     confidence=result["confidence"],
-                    agent_reasoning={
-                        "decision": result["decision"],
-                        "confidence": result["confidence"],
-                        "reasoning": result["reasoning"],
-                        "news_signal": result["news_signal"],
-                        "technical_signal": result["technical_signal"],
-                        "fundamental_signal": result["fundamental_signal"],
-                    },
+                    agent_reasoning=result["agent_reasoning"],
                 )
             except Exception as e:
                 print(f"  ⚠️ Trade execution failed: {type(e).__name__}: {e}")
