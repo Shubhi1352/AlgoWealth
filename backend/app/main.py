@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.db.mongodb import connect_db, disconnect_db
+from app.core.scheduler import start_scheduler, stop_scheduler
 from app.db.qdrant import connect_qdrant, disconnect_qdrant
 
 
@@ -35,6 +36,24 @@ async def lifespan(app: FastAPI):
     print(f"🛑 Shutting down {settings.APP_NAME}...")
     await disconnect_db()
     await disconnect_qdrant()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ── Startup ────────────────────────────────────────────────────────────────
+    print("🚀 Starting AlgoWealth...")
+    await connect_db()
+    await connect_qdrant()
+    start_scheduler()       # ← add this line after DB connections
+    
+    yield
+    
+    # ── Shutdown ───────────────────────────────────────────────────────────────
+    stop_scheduler()        # ← add this line before DB disconnects
+    await disconnect_db()
+    await disconnect_qdrant()
+    print("👋 AlgoWealth shut down cleanly")
+
 
 def create_app() -> FastAPI:
     """
@@ -71,6 +90,7 @@ def create_app() -> FastAPI:
     from app.api.v1.stocks import router as stocks_router
     from app.api.v1.portfolio import router as portfolio_router
     from app.api.v1.watchlists import router as watchlists_router
+    from app.core.scheduler import start_scheduler, stop_scheduler
     
     app.include_router(health_router, prefix="/api/v1", tags=["health"])
     app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
