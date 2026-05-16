@@ -25,6 +25,30 @@ TRANSACTIONS_COLLECTION = "transactions"
 MAX_POSITION_SIZE_PCT = 0.10   # 10% of available cash per trade
 
 
+async def _update_stop_loss_price(db, user_id: str, ticker: str, buy_price: float) -> None:
+    """
+    After a BUY executes, calculate and store the absolute stop loss price.
+    Only updates if the ticker exists in the user's automated watchlist.
+    
+    Example: buy_price=$200, stop_loss_pct=0.05 → stop_loss_price=$190
+    """
+    watchlist_doc = await db["automated_watchlist"].find_one(
+        {"user_id": user_id, "ticker": ticker, "active": True}
+    )
+    
+    if not watchlist_doc:
+        return  # Not in automated watchlist — no stop loss to set
+    
+    stop_loss_pct = watchlist_doc.get("stop_loss_pct", 0.05)
+    stop_loss_price = round(buy_price * (1 - stop_loss_pct), 4)
+    
+    await db["automated_watchlist"].update_one(
+        {"user_id": user_id, "ticker": ticker},
+        {"$set": {"stop_loss_price": stop_loss_price}}
+    )
+    print(f"  🛡️ Stop loss set for {ticker}: ${stop_loss_price} ({stop_loss_pct:.0%} below ${buy_price})")
+
+
 async def execute_trade(
     user_id: str,
     ticker: str,
@@ -145,6 +169,9 @@ async def _execute_buy(
     )
 
     print(f"  ✅ BUY {quantity:.4f} {ticker} @ ${price} (${trade_value:.2f})")
+    
+    await _update_stop_loss_price(db, user_id, ticker, price)
+
     return transaction
 
 
