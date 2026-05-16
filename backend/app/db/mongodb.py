@@ -39,6 +39,16 @@ async def create_indexes() -> None:
             unique=True,
             background=True,
         )
+        await db["trade_queue"].create_index(
+            [("user_id", 1), ("ticker", 1), ("status", 1)],
+            unique=True,
+            partialFilterExpression={"status": "pending"},  # Only enforces uniqueness on pending trades
+            background=True,
+        )
+        await db["trade_queue"].create_index(
+            [("status", 1), ("queued_at", 1)],
+            background=True,
+        )
     print("✅ MongoDB indexes created")
 
 

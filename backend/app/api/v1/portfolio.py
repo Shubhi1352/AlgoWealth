@@ -7,8 +7,10 @@ All endpoints are protected — require valid JWT.
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
+from app.services.trade_queue_service import TradeQueueService
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from app.core.dependencies import get_current_user_id
+from app.core.dependencies import get_current_user_id, get_db
 from app.models.portfolio import PortfolioSummary
 from app.services.portfolio_service import (
     execute_trade,
@@ -80,3 +82,22 @@ async def manual_trade(
         }
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/queue")
+async def get_trade_queue(
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+) -> dict:
+    """
+    Get all pending after-hours trades for the current user.
+    Frontend shows these as "Queued — executes at market open".
+    """
+    service = TradeQueueService(db)
+    pending = await service.get_pending_trades(user_id)
+
+    # Convert ObjectId to string for JSON serialization
+    for trade in pending:
+        trade["_id"] = str(trade["_id"])
+
+    return {"trades": pending, "count": len(pending)}

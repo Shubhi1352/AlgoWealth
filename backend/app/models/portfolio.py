@@ -55,3 +55,23 @@ class PortfolioSummary(BaseModel):
     total_pnl_pct: float       # total_pnl / 100_000
     total_positions: int
     total_trades: int
+
+
+class QueuedTrade(BaseModel):
+    """A trade waiting to execute at next market open."""
+    user_id: str
+    ticker: str
+    action: Literal["BUY", "SELL"]
+    confidence: float
+    agent_reasoning: dict
+    queued_at: datetime
+    status: Literal["pending", "executed", "cancelled"] = "pending"
+    source: Literal["automated", "manual"] = "automated"
+    executed_at: datetime | None = None
+    error: str | None = None   # Populated if execution fails
+
+
+class QueuedTradeResponse(BaseModel):
+    """API response for the trade queue endpoint."""
+    trades: list[QueuedTrade]
+    count: int
