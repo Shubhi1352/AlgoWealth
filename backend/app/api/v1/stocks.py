@@ -14,6 +14,9 @@ from app.services.portfolio_service import execute_trade
 from app.models.stock import StockDetail, CandleData
 from app.services.stock_service import get_stock_detail, get_candles
 from app.core.market_hours import get_market_status
+from app.services.recommendation_service import RecommendationService
+from app.core.dependencies import get_db
+from app.jobs.discovery_cron import run_discovery_cron
 
 router = APIRouter()
 
@@ -93,6 +96,33 @@ async def market_status() -> dict:
     Called by the frontend to show open/closed indicator.
     """
     return get_market_status()
+
+
+@router.get("/recommended")
+async def get_recommendation(
+    user_id: str = Depends(get_current_user_id),
+    db=Depends(get_db),
+) -> dict:
+    """
+    Get the personalized stock recommendation for the current user.
+    Generated daily by the discovery cron at 8AM ET.
+    """
+    service = RecommendationService(db)
+    rec = await service.get_recommendation(user_id)
+
+    if not rec:
+        return {"recommendation": None, "message": "No recommendation yet — check back tomorrow"}
+
+    return {"recommendation": rec}
+
+
+@router.post("/recommended/generate")
+async def trigger_discovery(
+    user_id: str = Depends(get_current_user_id),
+) -> dict:
+    """Manually trigger discovery cron — for testing only."""
+    await run_discovery_cron()
+    return {"message": "Discovery cron triggered"}
 
 
 @router.get("/{ticker}", response_model=StockDetail)

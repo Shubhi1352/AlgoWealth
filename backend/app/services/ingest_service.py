@@ -16,6 +16,9 @@ from qdrant_client.models import PointStruct
 from app.core.config import settings
 from app.db.qdrant import get_qdrant_client
 from sentence_transformers import SentenceTransformer
+import uuid
+from datetime import datetime, timezone
+from app.db.mongodb import get_database
 
 # Collection type alias for clarity
 CollectionName = Literal["trading_strategies", "financials"]
@@ -32,6 +35,7 @@ async def ingest_pdf(
     filename: str,
     collection: CollectionName,
     ticker: str | None = None,
+    document_type: str = "unknown",
 ) -> dict:
     """
     Full ingestion pipeline for a PDF document.
@@ -71,6 +75,15 @@ async def ingest_pdf(
         vectors=vectors,
         filename=filename,
         ticker=ticker,
+    )
+
+    # ── Step 5: Save to document registry ────────────────────────────────────
+    await _save_to_registry(
+        filename=filename,
+        collection=collection,
+        ticker=ticker,
+        document_type=document_type,
+        chunks_count=len(chunks),
     )
 
     return {
@@ -183,3 +196,39 @@ async def _upsert_to_qdrant(
 
     await client.upsert(collection_name=collection, points=points)
     print(f"  ✅ Upserted {len(points)} points into '{collection}'")  
+
+
+async def _save_to_registry(
+    filename: str,
+    collection: str,
+    ticker: str | None,
+    document_type: str,
+    chunks_count: int,
+    supersedes: str | None = None,
+) -> str:
+    """
+    Save ingestion record to the document_registry collection.
+    Returns the generated document ID.
+    """
+    db = get_database()
+    doc_id = str(uuid.uuid4())
+
+    doc = {
+        "id": doc_id,
+        "collection": collection,
+        "ticker": ticker,
+        "document_type": document_type,
+        "filename": filename,
+        "chunks_count": chunks_count,
+        "ingested_at": datetime.now(timezone.utc),
+        "supersedes": supersedes,
+    }
+
+    await db["document_registry"].update_one(
+        # Upsert on filename — re-ingesting same file updates the record
+        {"filename": filename, "collection": collection},
+        {"$set": doc},
+        upsert=True,
+    )
+    print(f"  📋 Registry updated: {filename} ({chunks_count} chunks)")
+    return doc_id

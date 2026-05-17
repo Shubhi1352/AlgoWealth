@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from app.core.config import settings
 from app.db.mongodb import get_database
 from app.models.portfolio import Position, PortfolioSummary, Transaction
-from app.services.stock_service import get_stock_price
+from app.services.stock_service import get_stock_price, get_fresh_price
 
 # MongoDB collection names
 USERS_COLLECTION = "users"
@@ -80,7 +80,7 @@ async def execute_trade(
         db = get_database()
 
     # ── Fetch current price ───────────────────────────────────────────────────
-    price = await get_stock_price(ticker)
+    price = await get_fresh_price(ticker)
 
     # ── Get user's current balance ────────────────────────────────────────────
     user = await db[USERS_COLLECTION].find_one({"id": user_id})

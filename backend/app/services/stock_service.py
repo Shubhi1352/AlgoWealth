@@ -368,3 +368,33 @@ async def get_candles(
         bars=bars,
         count=len(bars),
     )
+
+
+async def get_fresh_price(ticker: str) -> float:
+    """
+    Fetch price directly from Finnhub, bypassing Redis cache.
+    Used for trade execution where stale price = financial inaccuracy.
+    Cache is updated after fetch so subsequent reads benefit.
+    
+    Args:
+        ticker: Stock symbol e.g. "NVDA"
+    
+    Returns:
+        Current price as float, guaranteed fresh from Finnhub.
+    """
+    ticker = ticker.upper().strip()
+    
+    # Fetch directly from Finnhub — skip cache read
+    price = _fetch_price_from_finnhub(ticker)
+    
+    # Update cache so next read within 5min gets this fresh price
+    cache_key = f"price:{ticker}"
+    redis = get_redis()
+    await redis.setex(
+        cache_key,
+        settings.REDIS_PRICE_TTL,
+        json.dumps({"price": price, "ticker": ticker}),
+    )
+    
+    print(f"  📈 Fresh price for {ticker}: ${price}")
+    return price

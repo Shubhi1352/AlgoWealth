@@ -3,6 +3,7 @@ Pydantic models for stock data — price quotes, company info, and OHLCV candles
 """
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 
 class StockQuote(BaseModel):
@@ -51,3 +52,26 @@ class CandleData(BaseModel):
     resolution: str             # "D", "W", "60", "15" etc.
     bars: list[CandleBar]
     count: int
+
+
+class RecommendedStock(BaseModel):
+    """A personalized stock recommendation for a user."""
+    user_id: str
+    ticker: str
+    sentiment_score: float
+    summary: str
+    reasoning: str          # Why this stock fits this user
+    generated_at: datetime
+    articles: list[dict] = []
+
+
+class DocumentRegistry(BaseModel):
+    """Tracks every PDF ingested into the Qdrant knowledge base."""
+    id: str
+    collection: str                     # "financials" or "trading_strategies"
+    ticker: str | None = None           # None for strategy docs
+    document_type: str                  # "10K", "earnings", "strategy"
+    filename: str
+    chunks_count: int
+    ingested_at: datetime
+    supersedes: str | None = None       # Previous filename this replaced

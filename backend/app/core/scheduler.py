@@ -48,8 +48,21 @@ def start_scheduler() -> None:
         misfire_grace_time=60,
     )
 
+    # ── Job 3: Discovery cron ─────────────────────────────────────────────────
+    from app.jobs.discovery_cron import run_discovery_cron
+    from apscheduler.triggers.cron import CronTrigger
+
+    scheduler.add_job(
+        run_discovery_cron,
+        trigger=CronTrigger(hour=8, minute=0, timezone="America/New_York"),  # 8AM ET daily
+        id="discovery_cron",
+        name="Daily Stock Discovery",
+        replace_existing=True,
+        max_instances=1,
+    )
+
     scheduler.start()
-    print("✅ Scheduler started — trading cron (1hr), stop loss check (15min)")
+    print("✅ Scheduler started — trading cron (1hr), stop loss check (15min), discovery cron (8AM ET)")
 
 
 def stop_scheduler() -> None:
