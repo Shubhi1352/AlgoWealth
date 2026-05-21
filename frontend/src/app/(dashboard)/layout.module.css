@@ -1,0 +1,36 @@
+.homeNav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 16px;
+}
+
+.homeLogo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+}
+
+.homeLogoMark {
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1.5px solid rgba(255, 255, 255, 0.42);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+}
+
+.homeLogoName {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.90);
+}

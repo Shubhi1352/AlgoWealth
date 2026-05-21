@@ -1,0 +1,366 @@
+/* ─────────────────────────────────────────────
+   Auth Forms — login.module.css / register.module.css
+   Shared via auth.module.css
+
+   Aesthetic: nautical glass logbook
+   - Card surfaces like frosted porthole glass
+   - Staggered entrance from below (surfacing)
+   - Input fields styled like navigation instrument panels
+   - Accent color = aquamarine (#7FFFD4)
+───────────────────────────────────────────── */
+
+/* ── Page wrapper — full viewport, centered ── */
+.page {
+  position: relative;
+  z-index: 60;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* ── Card — the frosted glass panel ── */
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(10, 30, 56, 0.62);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 40px 36px 36px;
+  box-shadow:
+    0 24px 64px rgba(8, 40, 64, 0.55),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+
+  /* Entrance animation — surfaces from below */
+  animation: surface 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes surface {
+  from {
+    opacity:   0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity:   1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Logo mark at top ── */
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.logoMark {
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.30);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoName {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.90);
+  letter-spacing: 0.3px;
+}
+
+/* ── Heading block ── */
+.heading {
+  margin-bottom: 28px;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 300;            /* thin — nautical elegance */
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.42);
+  line-height: 1.5;
+}
+
+/* ── Form ── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Field group ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.40);
+}
+
+/* ── Input ── */
+.input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.90);
+  outline: none;
+  transition:
+    border-color 0.2s,
+    background   0.2s,
+    box-shadow   0.2s;
+  -webkit-appearance: none;
+}
+
+.input::placeholder {
+  color: rgba(255, 255, 255, 0.20);
+}
+
+.input:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.input:focus {
+  border-color: rgba(127, 255, 212, 0.50);
+  background: rgba(127, 255, 212, 0.04);
+  box-shadow: 0 0 0 3px rgba(127, 255, 212, 0.08);
+}
+
+.input.error {
+  border-color: rgba(255, 107, 138, 0.55);
+  background: rgba(255, 107, 138, 0.04);
+}
+
+/* ── Password wrapper (for show/hide toggle) ── */
+.passwordWrap {
+  position: relative;
+}
+
+.passwordWrap .input {
+  padding-right: 44px;
+}
+
+.eyeBtn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.30);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.eyeBtn:hover {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── Field error message ── */
+.fieldError {
+  font-size: 11px;
+  color: #FF6B8A;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Submit button ── */
+.submitBtn {
+  width: 100%;
+  padding: 13px;
+  background: rgba(255, 255, 255, 0.90);
+  color: #082840;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.2px;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(8, 40, 64, 0.40);
+}
+
+.submitBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Loading spinner inside button ── */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(8, 40, 64, 0.25);
+  border-top-color: #082840;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Global error banner ── */
+.errorBanner {
+  padding: 10px 14px;
+  background: rgba(255, 107, 138, 0.10);
+  border: 1px solid rgba(255, 107, 138, 0.28);
+  border-radius: 10px;
+  font-size: 13px;
+  color: #FF6B8A;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.4;
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-5px); }
+  40%       { transform: translateX(5px); }
+  60%       { transform: translateX(-3px); }
+  80%       { transform: translateX(3px); }
+}
+
+/* ── Divider ── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.dividerText {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.5px;
+}
+
+/* ── Footer link ── */
+.footer {
+  margin-top: 22px;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.footerLink {
+  color: rgba(127, 255, 212, 0.80);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.footerLink:hover {
+  color: #7FFFD4;
+}
+
+/* ── Balance badge (register page) ── */
+.balanceBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(127, 255, 212, 0.06);
+  border: 1px solid rgba(127, 255, 212, 0.18);
+  border-radius: 10px;
+  margin-bottom: 4px;
+}
+
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  background: #7FFFD4;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.8); }
+}
+
+.badgeText {
+  font-size: 12px;
+  color: rgba(127, 255, 212, 0.75);
+  line-height: 1.4;
+}
+
+.badgeAmount {
+  font-weight: 700;
+  color: #7FFFD4;
+}
+
+/* ── Password strength meter ── */
+.strengthWrap {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.strengthBar {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.10);
+  transition: background 0.3s;
+}
+
+.strengthBar.weak   { background: #FF6B8A; }
+.strengthBar.fair   { background: #FFD580; }
+.strengthBar.good   { background: #7FFFD4; }
+.strengthBar.strong { background: #7FFFD4; }

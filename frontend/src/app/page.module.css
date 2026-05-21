@@ -1,0 +1,197 @@
+/* ── Page content container ── */
+.pageContent {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 10;
+}
+
+/* ── Ghost text ── */
+.ghostText {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 25;
+  user-select: none;
+  pointer-events: none;
+  will-change: transform;
+  transform: translate(-50%, -50%);
+}
+
+.ghostLine {
+  display: block;
+  font-size: clamp(72px, 12vw, 118px);
+  font-weight: 400;
+  letter-spacing: -3px;
+  line-height: 0.88;
+  color: rgba(255, 255, 255, 0.28);
+  text-transform: lowercase;
+  filter: blur(0.8px);
+  white-space: nowrap;
+}
+
+/* ── Navigation ── */
+.homeNav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 16px;
+}
+
+.homeLogo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+}
+
+.homeLogoMark {
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1.5px solid rgba(255, 255, 255, 0.42);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+}
+
+.homeLogoName {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.90);
+}
+
+.homeNavRight {
+  display: flex;
+  gap: 10px;
+}
+
+.homeBtnGhost {
+  padding: 7px 18px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.homeBtnGhost:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.homeBtnSolid {
+  padding: 7px 18px;
+  border-radius: 9999px;
+  color: #082840;
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.88);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.homeBtnSolid:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* ── Bottom bar ── */
+.homeBottomBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 38px 26px;
+}
+
+.homeTagline {
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.50);
+}
+
+.homeActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.homeLivePill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(8, 28, 50, 0.42);
+  border: 1px solid rgba(127, 255, 212, 0.28);
+  border-radius: 9999px;
+  padding: 5px 14px;
+  backdrop-filter: blur(12px);
+}
+
+.homeLiveLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: #7FFFD4;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.homeCtaBtn {
+  padding: 11px 26px;
+  background: rgba(255, 255, 255, 0.90);
+  color: #082840;
+  border: none;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.homeCtaBtn:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* ── Live dot animation ── */
+.liveDot {
+  width: 6px;
+  height: 6px;
+  background: #7FFFD4;
+  border-radius: 50%;
+  animation: blink 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.75);
+  }
+}

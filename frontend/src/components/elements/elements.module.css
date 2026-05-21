@@ -1,0 +1,40 @@
+.wrapper {
+  position: fixed;
+  z-index: 35;
+  pointer-events: none;
+  will-change: transform;
+  transform: translate(-50%, -50%);
+}
+
+.inner {
+  animation: bob 3.5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@keyframes bob {
+  0%,  100% { transform: rotate(0deg)    translateY(0px); }
+  25%        { transform: rotate(1.5deg)  translateY(-6px); }
+  75%        { transform: rotate(-1deg)   translateY(4px); }
+}
+
+.innerSlow {
+  animation: bobSlow 5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@keyframes bobSlow {
+  0%,  100% { transform: rotate(0deg)    translateY(0px); }
+  25%        { transform: rotate(0.8deg)  translateY(-4px); }
+  75%        { transform: rotate(-0.5deg) translateY(3px); }
+}
+
+.innerSwim {
+  animation: swim 4s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@keyframes swim {
+  0%,  100% { transform: rotate(0deg)    translateY(0px)  translateX(0px); }
+  33%        { transform: rotate(2deg)    translateY(-5px) translateX(3px); }
+  66%        { transform: rotate(-1.5deg) translateY(3px)  translateX(-2px); }
+}

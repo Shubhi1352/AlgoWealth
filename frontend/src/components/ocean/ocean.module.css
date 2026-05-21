@@ -1,0 +1,86 @@
+/* ─────────────────────────────────────────────
+   OceanBackground — persistent parallax scene
+   Sits at z-index 0, full viewport, fixed.
+   Everything else mounts above it.
+───────────────────────────────────────────── */
+
+.ocean {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #C5E2E0;
+  z-index: 0;
+  /* cursor stays default — ocean never captures pointer events */
+  pointer-events: none;
+}
+
+/* ── Sky gradient ── */
+.sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    #C2D8D6 0%,
+    #B5D8D8 8%,
+    #A2D2D4 20%,
+    #84C8D2 34%,
+    #5CB8CC 50%,
+    #38A0C0 64%,
+    #1E88B0 76%,
+    #1070A0 88%
+  );
+}
+
+/* ── Film grain ── */
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0.20;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ── Fog patches ── */
+.fogTopLeft {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: radial-gradient(ellipse 75% 65% at 18% 8%,
+    rgba(210,235,232,0.80) 0%,
+    rgba(195,228,228,0.45) 38%,
+    rgba(180,220,222,0.15) 65%,
+    transparent 82%
+  );
+}
+
+.fogTopRight {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: radial-gradient(ellipse 50% 45% at 88% 5%,
+    rgba(205,232,230,0.55) 0%,
+    rgba(190,225,226,0.22) 50%,
+    transparent 75%
+  );
+}
+
+/* ── Hill layers — shared base ──
+   Each hill div is positioned via inline style (bottom / zIndex)
+   and moved by the parallax JS loop via style.transform
+── */
+.hill {
+  position: absolute;
+  left: -12%;
+  width: 124%;
+  will-change: transform;
+}
+
+/* ── Atmospheric haze bands ── */
+.atmo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}

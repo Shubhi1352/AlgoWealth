@@ -1,0 +1,124 @@
+/* ─────────────────────────────────────────────
+   Sidebar — glassmorphic sidebar with native scroll
+   - Fixed position on left side, full height
+   - Icon + label per nav item
+   - Native scroll (no custom buttons)
+   - Active item has subtle highlight
+───────────────────────────────────────────── */
+
+/* ── Outer container — fixed, full height ── */
+.sidebar {
+  position: fixed;
+  left: 14px;
+  top: 80px;
+  bottom: 150px;
+  z-index: 50;
+
+  display: flex;
+  flex-direction: column;
+
+  width: 100px;
+
+  background: rgba(10, 30, 56, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 4px;
+
+  padding: 8px 8px;
+
+  box-shadow:
+    0 8px 32px rgba(8, 40, 64, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ── Scrollable item list ── */
+.itemList {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.itemList::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Single nav item ── */
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 3px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.item.active {
+  background: rgba(127, 255, 212, 0.10);
+  border: 1px solid rgba(127, 255, 212, 0.18);
+}
+
+/* ── Icon container ── */
+.iconWrap {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.item.active .iconWrap {
+  background: rgba(127, 255, 212, 0.12);
+}
+
+/* ── Label ── */
+.label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.40);
+  letter-spacing: 0.3px;
+  text-align: center;
+  width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.15;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+
+  padding: 0 4px;
+}
+
+.item.active .label {
+  color: rgba(127, 255, 212, 0.80);
+}
+
+.item:hover .label {
+  color: rgba(255, 255, 255, 0.70);
+}
