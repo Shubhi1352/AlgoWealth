@@ -1,19 +1,5 @@
 'use client'
 
-/**
- * Sidebar
- *
- * Glassmorphic sidebar with native scroll.
- * Features:
- *  - Fixed position on left side
- *  - Each item: icon + label
- *  - Native scroll (no custom buttons)
- *  - Active item highlighted with accent color
- *
- * Position: fixed, left: 14px, top: 0, full height
- * z-index: 50 — above ocean (z:0), below modals (z:90)
- */
-
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import s from './sidebar.module.css'

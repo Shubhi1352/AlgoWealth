@@ -60,6 +60,19 @@ def start_scheduler() -> None:
         replace_existing=True,
         max_instances=1,
     )
+    
+    # ── Job 4: Daily snapshot cron ───────────────────────────────────────────
+    from app.jobs.snapshot_cron import daily_snapshot_cron
+    from apscheduler.triggers.cron import CronTrigger
+
+    scheduler.add_job(
+        daily_snapshot_cron,
+        trigger=CronTrigger(hour=16, minute=15, timezone="America/New_York"),  # 4:15 PM ET daily
+        id="snapshot_cron",
+        name="Daily Portfolio Snapshot",
+        replace_existing=True,
+        max_instances=1,
+    )
 
     scheduler.start()
     print("✅ Scheduler started — trading cron (1hr), stop loss check (15min), discovery cron (8AM ET)")

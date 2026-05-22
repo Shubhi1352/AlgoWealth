@@ -15,6 +15,7 @@ from app.core.config import settings
 from app.db.mongodb import get_database
 from app.models.portfolio import Position, PortfolioSummary, Transaction
 from app.services.stock_service import get_stock_price, get_fresh_price
+from app.services.snapshot_service import save_snapshot
 
 # MongoDB collection names
 USERS_COLLECTION = "users"
@@ -90,17 +91,22 @@ async def execute_trade(
     cash_balance = float(user["virtual_balance"])
 
     if action == "BUY":
-        return await _execute_buy(
+        transaction = await _execute_buy(
             db, user_id, ticker, price, confidence,
             cash_balance, agent_reasoning
         )
     elif action == "SELL":
-        return await _execute_sell(
+        transaction = await _execute_sell(
             db, user_id, ticker, price, confidence,
             agent_reasoning
         )
     else:
         raise ValueError(f"Invalid action: {action}. Must be BUY or SELL.")
+
+    # Snapshot after every trade — fire and forget, never blocks the response
+    await save_snapshot(user_id=user_id, db=db, trigger="trade")
+
+    return transaction
 
 
 async def _execute_buy(

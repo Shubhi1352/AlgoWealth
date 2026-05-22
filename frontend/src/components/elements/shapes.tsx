@@ -76,26 +76,61 @@ export function Fish() {
 // ─────────────────────────────────────────────────────────────────────────────
 export function Shark() {
   return (
-    <svg width="90" height="52" viewBox="0 0 90 52" fill="none">
-      {/* Body */}
-      <path d="M0,28 Q20,12 55,22 Q75,28 90,24 Q75,34 55,30 Q20,36 0,28 Z"
-        fill="#0A1E38" />
-      {/* Dorsal fin */}
-      <path d="M40,22 L48,4 L58,22 Z" fill="#082840" />
+    <svg
+      width="92"
+      height="44"
+      viewBox="0 0 92 44"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Shark body */}
+      <path
+        d="
+          M4 24
+          Q14 12 34 10
+          L46 2
+          L50 11
+          Q62 10 72 16
+          Q58 18 48 22
+          L60 34
+          L40 25
+          Q20 30 4 24
+          Z
+        "
+        fill="black"
+      />
+
       {/* Tail */}
-      <path d="M0,28 L-8,18 L-8,38 Z" fill="#082840" />
-      {/* Pectoral fin */}
-      <path d="M35,28 L28,40 L50,30 Z" fill="#0D2840" />
+      <path
+        d="
+          M68 19
+          L84 8
+          L78 20
+          L90 30
+          L70 25
+          Z
+        "
+        fill="black"
+      />
+
+      {/* Bottom fin */}
+      <path
+        d="
+          M34 23
+          L24 36
+          L42 28
+          Z
+        "
+        fill="black"
+      />
+
       {/* Eye */}
-      <circle cx="72" cy="25" r="3" fill="white" />
-      <circle cx="73" cy="25" r="1.5" fill="#0A1E38" />
-      {/* Gill lines */}
-      <path d="M60,22 Q62,27 60,32" stroke="rgba(255,255,255,0.20)"
-        strokeWidth="1.5" strokeLinecap="round" fill="none" />
-      <path d="M55,21 Q57,27 55,33" stroke="rgba(255,255,255,0.14)"
-        strokeWidth="1.2" strokeLinecap="round" fill="none" />
-      {/* Belly — lighter shade */}
-      <ellipse cx="45" cy="30" rx="20" ry="5" fill="rgba(94,182,200,0.18)" />
+      <circle
+        cx="18"
+        cy="18"
+        r="1.5"
+        fill="white"
+      />
     </svg>
   )
 }

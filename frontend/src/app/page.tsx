@@ -1,25 +1,5 @@
 'use client'
 
-/**
- * AlgoWealth Homepage
- *
- * Converted from the finalized algowealth_homepage.html.
- * Features:
- *  - 5-layer parallax hill landscape with atmospheric haze bands
- *  - Ghost "algowealth" text centered, drifts with cursor at mid depth
- *  - Animated sailing boat at same parallax depth as text, bobs independently
- *  - Film grain overlay + dual fog radial patches
- *  - Nav with logo, sign-in, get-started
- *  - Bottom bar: tagline left, live pill + CTA right
- *
- * Parallax technique:
- *  - Mouse position → normalized offset (-1..1) from center
- *  - Each layer has (sx, sy) depth multipliers — closer = higher values
- *  - requestAnimationFrame loop smoothly damps toward target (0.055 lerp factor)
- *  - Ghost text + boat share identical DEPTH_X/DEPTH_Y so they move as one unit
- *  - Boat's CSS `animation: bob` runs on inner div independently of JS transform
- */
-
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import OceanBackground from '@/components/ocean/OceanBackground'

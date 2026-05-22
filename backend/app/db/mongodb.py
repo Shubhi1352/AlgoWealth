@@ -49,6 +49,11 @@ async def create_indexes() -> None:
             [("status", 1), ("queued_at", 1)],
             background=True,
         )
+        await db["portfolio_snapshots"].create_index(
+            [("user_id", 1), ("date", 1)],
+            unique=True,
+            background=True,
+        )
     print("✅ MongoDB indexes created")
 
 

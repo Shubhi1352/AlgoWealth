@@ -101,3 +101,20 @@ async def get_trade_queue(
         trade["_id"] = str(trade["_id"])
 
     return {"trades": pending, "count": len(pending)}
+
+
+@router.get("/history")
+async def get_portfolio_history(
+    current_user_id: str = Depends(get_current_user_id),
+    db=Depends(get_db),
+):
+    """
+    Returns daily portfolio value snapshots for the P&L chart.
+    Sorted ascending by date.
+    """
+    snapshots = await db["portfolio_snapshots"].find(
+        {"user_id": current_user_id},
+        {"_id": 0, "date": 1, "total_value": 1, "cash_balance": 1, "positions_value": 1}
+    ).sort("date", 1).to_list(length=365)
+
+    return {"history": snapshots}

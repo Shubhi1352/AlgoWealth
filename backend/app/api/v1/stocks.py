@@ -104,16 +104,24 @@ async def get_recommendation(
     db=Depends(get_db),
 ) -> dict:
     """
-    Get the personalized stock recommendation for the current user.
+    Get top-3 personalized stock recommendations for the current user.
     Generated daily by the discovery cron at 8AM ET.
     """
     service = RecommendationService(db)
-    rec = await service.get_recommendation(user_id)
+    rec = await service.get_recommendations(user_id)
 
     if not rec:
-        return {"recommendation": None, "message": "No recommendation yet — check back tomorrow"}
+        return {
+            "recommendations": [],
+            "generated_at": None,
+            "message": "No recommendations yet — trigger discovery or wait for 8AM ET cron",
+        }
 
-    return {"recommendation": rec}
+    return {
+        "recommendations":        rec.get("recommendations", []),
+        "generated_at":           rec.get("generated_at"),
+        "user_context_snapshot":  rec.get("user_context_snapshot", {}),
+    }
 
 
 @router.post("/recommended/generate")
@@ -122,7 +130,7 @@ async def trigger_discovery(
 ) -> dict:
     """Manually trigger discovery cron — for testing only."""
     await run_discovery_cron()
-    return {"message": "Discovery cron triggered"}
+    return {"message": "Discovery cron triggered - refresh in 30 seconds"}
 
 
 @router.get("/{ticker}", response_model=StockDetail)

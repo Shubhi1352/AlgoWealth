@@ -1,16 +1,3 @@
-/**
- * API Client
- *
- * Typed fetch wrapper for all AlgoWealth backend calls.
- * Single source of truth for API communication.
- *
- * Design decisions:
- *  - Throws ApiError (not generic Error) so callers can show typed messages
- *  - Token is read from Zustand store — no need to pass it everywhere
- *  - BASE_URL from env — easy to switch between dev/prod
- *  - All responses typed with generics
- */
-
 import { useAuthStore } from '@/store/useAuthStore'
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -114,4 +101,76 @@ export async function loginUser(
  */
 export async function getMe(): Promise<UserResponse> {
   return request<UserResponse>('/api/v1/auth/me', {}, true)
+}
+
+// ── Authorized fetcher for SWR ─────────────────────────────────────────────
+export async function authorizedFetcher<T>(
+  url: string,
+  token: string
+): Promise<T> {
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new ApiError(res.status, await res.text())
+  return res.json() as Promise<T>
+}
+
+// ── Portfolio summary types ────────────────────────────────────────────────
+export interface PortfolioSummary {
+  user_id: string
+  total_value: number
+  cash_balance: number
+  positions_value: number
+  total_pnl: number
+  total_pnl_pct: number
+  total_positions: number
+  total_trades: number
+}
+
+export interface Transaction {
+  id: string
+  ticker: string
+  action: 'BUY' | 'SELL' | 'HOLD'
+  quantity: number
+  price: number
+  total_value: number
+  confidence_score: number
+  agent_reasoning?: Record<string, unknown>
+  timestamp: string
+}
+
+export interface RecommendedStock {
+  ticker: string
+  news_signal: 'BUY' | 'SELL' | 'HOLD'
+  technical_signal: 'BUY' | 'SELL' | 'HOLD'
+  news_summary: string
+  technical_summary: string
+  current_price: number
+  price_change_pct: number
+  market_score: number
+  fit_score: number
+  final_score: number
+  reasoning: string
+  articles: { title: string; url: string }[]
+}
+
+export interface RecommendationsResponse {
+  recommendations: RecommendedStock[]
+  generated_at: string | null
+  user_context_snapshot?: {
+    cash_balance: number
+    total_pnl_pct: number
+    open_positions: number
+  }
+}
+
+export interface PortfolioSnapshot {
+  date: string
+  total_value: number
+  cash_balance: number
+  positions_value: number
+}
+
+export interface PortfolioHistory {
+  history: PortfolioSnapshot[]
 }

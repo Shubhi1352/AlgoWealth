@@ -1,18 +1,5 @@
 'use client'
 
-/**
- * MarketStatus
- *
- * Live market status pill — shown on every page.
- * Polls GET /api/v1/stocks/market/status every 60 seconds.
- * Falls back to client-side time check if API is unreachable.
- *
- * Position: fixed, bottom-right corner (default)
- * Can be overridden via props for homepage bottom-bar placement.
- *
- * Design: matches the homepage live pill — same style across all pages.
- */
-
 import { useEffect, useState } from 'react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────

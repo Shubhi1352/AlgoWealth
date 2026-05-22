@@ -1,0 +1,23 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.bottomRow {
+  display: flex;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;        /* critical — lets flex children shrink below content size */
+  overflow: hidden;
+}
