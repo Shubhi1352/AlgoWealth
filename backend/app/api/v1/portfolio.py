@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from app.services.trade_queue_service import TradeQueueService
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from typing import Literal
 
 from app.core.dependencies import get_current_user_id, get_db
 from app.models.portfolio import PortfolioSummary
@@ -27,6 +28,8 @@ class TradeRequest(BaseModel):
     ticker: str
     action: str        # "BUY" or "SELL"
     confidence: float  # 0.0 - 1.0
+    quantity: float = 0.0
+    trade_type: Literal["manual", "automated"] = "automated"
 
 
 @router.get("/", response_model=PortfolioSummary)
@@ -72,6 +75,8 @@ async def manual_trade(
             action=request.action.upper(),
             confidence=request.confidence,
             agent_reasoning={"manual": True, "note": "Manually triggered trade"},
+            trade_type=request.trade_type,
+            quantity=request.quantity,
         )
         return {
             "message": f"{transaction.action} executed successfully",

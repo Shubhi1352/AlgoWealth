@@ -125,8 +125,9 @@ async def get_stock_quote(ticker: str) -> StockQuote:
     cached = await redis.get(cache_key)
     if cached:
         data = json.loads(cached)
+        data['cached'] = True
         print(f"  💾 Quote cache HIT for {ticker}")
-        return StockQuote(**data, cached=True)
+        return StockQuote(**data)
 
     # ── Step 2: Fetch full quote from Finnhub /quote ──────────────────────────
     print(f"  🌐 Quote cache MISS for {ticker} — fetching from Finnhub")

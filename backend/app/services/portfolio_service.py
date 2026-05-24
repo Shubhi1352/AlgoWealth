@@ -16,11 +16,13 @@ from app.db.mongodb import get_database
 from app.models.portfolio import Position, PortfolioSummary, Transaction
 from app.services.stock_service import get_stock_price, get_fresh_price
 from app.services.snapshot_service import save_snapshot
+from typing import Literal
 
 # MongoDB collection names
 USERS_COLLECTION = "users"
 POSITIONS_COLLECTION = "positions"
 TRANSACTIONS_COLLECTION = "transactions"
+TRADE_TYPE = Literal["manual", "automated"]
 
 # Position sizing: max % of available cash per trade
 MAX_POSITION_SIZE_PCT = 0.10   # 10% of available cash per trade
@@ -56,26 +58,31 @@ async def execute_trade(
     action: str,
     confidence: float,
     agent_reasoning: dict,
+    trade_type: TRADE_TYPE = "automated",
+    quantity: float = 0.0,
     db=None,
 ) -> Transaction:
     """
     Execute a paper trade based on agent decision.
 
-    Position size = confidence × MAX_POSITION_SIZE_PCT × available_cash
-    Example: 80% confidence × 10% × $100,000 = $8,000 position
+    For automated trades: position size = confidence × MAX_POSITION_SIZE_PCT × cash
+    For manual trades: quantity field used directly as share count
 
     Args:
-        user_id:        The trading user's ID.
-        ticker:         Stock ticker e.g. "NVDA".
-        action:         "BUY" or "SELL".
-        confidence:     Agent confidence score 0.0-1.0.
-        agent_reasoning: Full reasoning dict from Synthesis Agent.
+        user_id:         Authenticated user's ID.
+        ticker:          Stock ticker e.g. "NVDA".
+        action:          "BUY" or "SELL".
+        confidence:      Agent confidence 0.0–1.0.
+        agent_reasoning: Reasoning dict from Synthesis Agent or {"manual": True}.
+        trade_type:      "manual" or "automated" — controls sizing logic.
+        quantity:        Share count for manual trades (fractional allowed).
+        db:              Injected MongoDB client.
 
     Returns:
         Completed Transaction record.
 
     Raises:
-        ValueError: If insufficient balance or invalid action.
+        ValueError: Insufficient balance, no position, invalid action, bad quantity.
     """
     if db is None:
         db = get_database()
@@ -93,12 +100,14 @@ async def execute_trade(
     if action == "BUY":
         transaction = await _execute_buy(
             db, user_id, ticker, price, confidence,
-            cash_balance, agent_reasoning
+            cash_balance, agent_reasoning,
+            trade_type=trade_type, manual_quantity=quantity,
         )
     elif action == "SELL":
         transaction = await _execute_sell(
             db, user_id, ticker, price, confidence,
-            agent_reasoning
+            agent_reasoning,
+            trade_type=trade_type, manual_quantity=quantity,
         )
     else:
         raise ValueError(f"Invalid action: {action}. Must be BUY or SELL.")
@@ -110,20 +119,26 @@ async def execute_trade(
 
 
 async def _execute_buy(
-    db, user_id, ticker, price, confidence, cash_balance, agent_reasoning
+    db, user_id, ticker, price, confidence, cash_balance, agent_reasoning, trade_type: str, manual_quantity: float,
 ) -> Transaction:
     """Execute a BUY order."""
 
     # ── Calculate position size ───────────────────────────────────────────────
-    trade_value = confidence * MAX_POSITION_SIZE_PCT * cash_balance
-    quantity = trade_value / price
+    if trade_type == "manual":
+        if manual_quantity <= 0:
+            raise ValueError("quantity must be greater than 0 for manual trades")
+        quantity   = manual_quantity
+        trade_value = round(quantity * price, 2)
+    else:
+        trade_value = confidence * MAX_POSITION_SIZE_PCT * cash_balance
+        quantity    = trade_value / price
 
     if trade_value > cash_balance:
         raise ValueError(
             f"Insufficient balance. Need ${trade_value:.2f}, have ${cash_balance:.2f}"
         )
 
-    if quantity < 0.001:
+    if quantity < 0.0001:
         raise ValueError("Position size too small to execute")
 
     # ── Record transaction ────────────────────────────────────────────────────
@@ -133,7 +148,7 @@ async def _execute_buy(
         action="BUY",
         quantity=round(quantity, 6),
         price=price,
-        total_value=round(trade_value, 2),
+        total_value=trade_value,
         confidence_score=confidence,
         agent_reasoning=agent_reasoning,
     )
@@ -174,7 +189,7 @@ async def _execute_buy(
         {"$inc": {"virtual_balance": -trade_value}}
     )
 
-    print(f"  ✅ BUY {quantity:.4f} {ticker} @ ${price} (${trade_value:.2f})")
+    print(f"  ✅ BUY executed user={user_id} ticker={ticker} qty={quantity:.4f} price={price:.2f} type={trade_type}")
     
     await _update_stop_loss_price(db, user_id, ticker, price)
 
@@ -182,7 +197,7 @@ async def _execute_buy(
 
 
 async def _execute_sell(
-    db, user_id, ticker, price, confidence, agent_reasoning
+    db, user_id, ticker, price, confidence, agent_reasoning, trade_type: str, manual_quantity: float,
 ) -> Transaction:
     """Execute a SELL order — sells entire position."""
 
@@ -193,34 +208,57 @@ async def _execute_sell(
     if not position:
         raise ValueError(f"No position found for {ticker}")
 
-    quantity = float(position["quantity"])
-    total_value = quantity * price
+    held = float(position["quantity"])
+
+    if trade_type == "manual":
+        if manual_quantity <= 0:
+            raise ValueError("quantity must be greater than 0 for manual trades")
+        if manual_quantity > held:
+            raise ValueError(
+                f"Cannot sell {manual_quantity} shares — you only hold {held:.4f}"
+            )
+        quantity = manual_quantity
+    else:
+        quantity = held   # automated always closes full position
+    
+    total_value = round(quantity * price, 2)
 
     # ── Record transaction ────────────────────────────────────────────────────
     transaction = Transaction(
         user_id=user_id,
         ticker=ticker,
         action="SELL",
-        quantity=quantity,
+        quantity=round(quantity, 6),
         price=price,
-        total_value=round(total_value, 2),
+        total_value=total_value,
         confidence_score=confidence,
         agent_reasoning=agent_reasoning,
     )
     await db[TRANSACTIONS_COLLECTION].insert_one(transaction.model_dump())
 
-    # ── Remove position ───────────────────────────────────────────────────────
-    await db[POSITIONS_COLLECTION].delete_one(
-        {"user_id": user_id, "ticker": ticker}
-    )
+    remaining = round(held - quantity, 6)
 
-    # ── Return proceeds to balance ────────────────────────────────────────────
+    if remaining < 0.0001:
+        # Full position closed — remove document entirely
+        await db[POSITIONS_COLLECTION].delete_one(
+            {"user_id": user_id, "ticker": ticker}
+        )
+    else:
+        # Partial sell — update quantity, avg cost unchanged
+        await db[POSITIONS_COLLECTION].update_one(
+            {"user_id": user_id, "ticker": ticker},
+            {"$set": {
+                "quantity":   remaining,
+                "updated_at": datetime.now(timezone.utc),
+            }}
+        )
+
     await db[USERS_COLLECTION].update_one(
         {"id": user_id},
         {"$inc": {"virtual_balance": total_value}}
     )
 
-    print(f"  ✅ SELL {quantity:.4f} {ticker} @ ${price} (${total_value:.2f})")
+    print(f"SELL executed user={user_id} ticker={ticker} qty={quantity:.4f} price={price:.2f} type={trade_type}")
     return transaction
 
 
