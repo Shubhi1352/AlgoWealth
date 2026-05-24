@@ -5,6 +5,7 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  padding: 24px 28px;
 }
 
 .metricsGrid {

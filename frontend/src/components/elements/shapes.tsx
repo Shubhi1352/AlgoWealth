@@ -78,8 +78,8 @@ export function Shark() {
   return (
     <svg
       width="92"
-      height="44"
-      viewBox="0 0 92 44"
+      height="40"
+      viewBox="0 0 92 40"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
@@ -89,7 +89,7 @@ export function Shark() {
           M4 24
           Q14 12 34 10
           L46 2
-          L50 11
+          L45 9
           Q62 10 72 16
           Q58 18 48 22
           L60 34
@@ -103,11 +103,11 @@ export function Shark() {
       {/* Tail */}
       <path
         d="
-          M68 19
-          L84 8
-          L78 20
-          L90 30
-          L70 25
+          M68 15
+          L84 1
+          L78 15
+          L84 23
+          L71 18
           Z
         "
         fill="black"
@@ -117,8 +117,8 @@ export function Shark() {
       <path
         d="
           M34 23
-          L24 36
-          L42 28
+          L37 36
+          L42 25
           Z
         "
         fill="black"

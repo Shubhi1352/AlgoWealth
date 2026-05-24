@@ -50,10 +50,10 @@
   margin-top: 60px;
   margin-left: 128px;
   height: calc(100vh - 60px);
-  padding: 20px 24px 20px;
+  padding: 0;
   box-sizing: border-box;
   overflow: hidden;        /* ← no scroll, ever */
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }

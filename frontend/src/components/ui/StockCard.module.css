@@ -1,0 +1,306 @@
+.cardWrap {
+  position: relative;
+  height: 88px;
+}
+
+/* ─── Card shell ─────────────────────────────────────────────────────────────── */
+.card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(14, 84, 128, 0.25);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 16px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  user-select: none;
+  z-index: 1;
+}
+
+.card:hover {
+  background: rgba(14, 84, 128, 0.40);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.card.expanded {
+  background: rgba(8, 40, 64, 0.97);
+  border-color: rgba(127, 255, 212, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  cursor: default;
+  z-index: 10;
+}
+
+/* ─── Header row ─────────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoWrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.logoFallback {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: 0.5px;
+}
+
+.hidden {
+  display: none;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ticker {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: 0.5px;
+}
+
+.name {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.priceBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.price {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.change {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.positive { color: var(--color-accent); }
+.negative { color: var(--color-loss); }
+
+/* ─── Meta row ───────────────────────────────────────────────────────────────── */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.metaDot {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+/* ─── Expanded panel ─────────────────────────────────────────────────────────── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.panelDivider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0 -16px;
+}
+
+.panelLabel {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 0;
+}
+
+.watchlistRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ─── Watchlist buttons ──────────────────────────────────────────────────────── */
+.watchlistBtn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.watchlistBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.watchlistBtn:disabled {
+  cursor: not-allowed;
+}
+
+.watchlistBtn.loading {
+  opacity: 0.6;
+}
+
+.watchlistBtn.success {
+  background: rgba(127, 255, 212, 0.12);
+  border-color: rgba(127, 255, 212, 0.40);
+  color: var(--color-accent);
+}
+
+.watchlistBtn.error {
+  background: rgba(255, 107, 138, 0.12);
+  border-color: rgba(255, 107, 138, 0.40);
+  color: var(--color-loss);
+}
+
+/* ─── View More link ─────────────────────────────────────────────────────────── */
+.viewMore {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(127, 255, 212, 0.25);
+  background: rgba(127, 255, 212, 0.06);
+  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.viewMore:hover {
+  background: rgba(127, 255, 212, 0.14);
+  border-color: rgba(127, 255, 212, 0.45);
+}
+
+/* ─── Skeleton state ─────────────────────────────────────────────────────────── */
+.skeletonCard {
+  cursor: default;
+  pointer-events: none;
+  animation: none;
+}
+
+.skeletonCard:hover {
+  transform: none;
+  background: rgba(14, 84, 128, 0.25);
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
+.skeletonLogo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.10);
+  flex-shrink: 0;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+.skeletonBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
+}
+
+.skeletonPriceBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.skeletonLine {
+  height: 9px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.10);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+.skeletonLine.short  { width: 60px; }
+.skeletonLine.medium { width: 140px; }
+.skeletonLine.long   { width: 110px; }
+.skeletonLine.price  { width: 64px; }
+.skeletonLine.change { width: 40px; }
+
+@keyframes shimmer {
+  0%   { opacity: 0.35; }
+  50%  { opacity: 0.70; }
+  100% { opacity: 0.35; }
+}
+
+/* ─── Unavailable state ──────────────────────────────────────────────────────── */
+.card.unavailable {
+  cursor: default;
+  opacity: 0.5;
+  pointer-events: none;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.unavailableTicker {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.unavailableMsg {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}

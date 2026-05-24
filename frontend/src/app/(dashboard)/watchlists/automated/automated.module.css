@@ -1,0 +1,300 @@
+/* ─── Page shell ─────────────────────────────────────────────────────────── */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 28px 40px;
+  box-sizing: border-box;
+}
+.page::-webkit-scrollbar { width: 4px; }
+.page::-webkit-scrollbar-track { background: transparent; }
+.page::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+/* ─── Title row ──────────────────────────────────────────────────────────── */
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.pageTitle {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 4px;
+  line-height: 1;
+}
+
+.pageSubtitle {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ─── Add row ────────────────────────────────────────────────────────────── */
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.addInput {
+  width: 140px !important;
+  text-transform: uppercase;
+}
+
+.slInput {
+  width: 72px !important;
+}
+
+.addBtn {
+  white-space: nowrap;
+}
+
+/* ─── KPI strip ──────────────────────────────────────────────────────────── */
+.kpiStrip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.kpiCard {
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpiLabel {
+  font-size: 0.70rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.kpiValue {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+.kpiSub {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+/* ─── Table wrap ─────────────────────────────────────────────────────────── */
+.tableWrap {
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.table {
+  width: 100%;
+}
+
+.loadingRows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+}
+
+/* ─── Empty state ────────────────────────────────────────────────────────── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.emptyIcon  { font-size: 2.4rem; }
+
+.emptyTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.emptySub {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.emptyLink {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+.emptyLink:hover { text-decoration: underline; }
+
+/* ─── Table rows ─────────────────────────────────────────────────────────── */
+.row { transition: background 0.12s; }
+.row:hover { background: rgba(255,255,255,0.03); }
+
+.tickerCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.tickerCell:hover .tickerSymbol { color: var(--color-accent); }
+
+.rowLogo {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: contain;
+  background: rgba(255,255,255,0.06);
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.tickerSymbol {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  transition: color 0.15s;
+}
+
+.tickerName {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.numCell {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pnlCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pnlPct {
+  font-size: 0.72rem;
+}
+
+/* ─── Stop loss inline edit ──────────────────────────────────────────────── */
+.slBadge {
+  background: rgba(255,213,128,0.12);
+  color: var(--color-warning);
+  border: 1px solid rgba(255,213,128,0.25);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.slBadge:hover { background: rgba(255,213,128,0.22); }
+
+.slEditRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.slEditInput {
+  width: 56px !important;
+  padding: 4px 8px !important;
+  font-size: 0.82rem !important;
+}
+
+/* hide number spinners */
+.slEditInput::-webkit-outer-spin-button,
+.slEditInput::-webkit-inner-spin-button { -webkit-appearance: none; }
+.slEditInput[type=number] { -moz-appearance: textfield; }
+
+.slPctSymbol {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.slSaveBtn {
+  background: rgba(127,255,212,0.15);
+  color: var(--color-accent);
+  border: 1px solid rgba(127,255,212,0.3);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s;
+}
+.slSaveBtn:hover:not(:disabled) { background: rgba(127,255,212,0.28); }
+.slSaveBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.slCancelBtn {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.12s;
+}
+.slCancelBtn:hover { color: var(--color-loss); border-color: var(--color-loss); }
+
+/* ─── Remove button ──────────────────────────────────────────────────────── */
+.removeBtn {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+}
+.removeBtn:hover:not(:disabled) {
+  color: var(--color-loss);
+  border-color: rgba(255,107,138,0.35);
+  background: rgba(255,107,138,0.08);
+}
+.removeBtn:disabled { opacity: 0.4; cursor: not-allowed; }

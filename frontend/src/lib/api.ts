@@ -174,3 +174,251 @@ export interface PortfolioSnapshot {
 export interface PortfolioHistory {
   history: PortfolioSnapshot[]
 }
+
+// ─── Stock Detail ────────────────────────────────────────────────────────────
+
+export interface StockQuote {
+  ticker:      string
+  current_price: number
+  open:        number
+  high:        number
+  low:         number
+  prev_close:  number
+  change:      number
+  change_pct:  number
+  cached:      boolean
+}
+
+export interface CompanyProfile {
+  ticker:     string
+  name:       string
+  sector:     string
+  market_cap: number        // in millions USD
+  logo_url:   string
+  exchange:   string
+  ipo_date:   string
+}
+
+export interface StockDetail {
+  quote:   StockQuote
+  company: CompanyProfile
+}
+
+// ─── Watchlist ────────────────────────────────────────────────────────────────
+
+export type WatchlistType = 'automated' | 'a' | 'b'
+
+export async function addToWatchlist(
+  ticker: string,
+  list: WatchlistType,
+  token: string,
+  stopLossPct: number = 0.05,
+): Promise<void> {
+  const body = list === 'automated'
+    ? { ticker, stop_loss_pct: stopLossPct }
+    : { ticker }
+  
+  const res = await fetch(`${BASE_URL}/api/v1/watchlists/watchlists/${list}`, {
+    method:  'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err?.detail ?? `Failed to add ${ticker} to watchlist`)
+  }
+}
+
+// ─── Stock Detail Types ────────────────────────────────────────────────────
+
+export interface Position {
+  ticker: string
+  quantity: number
+  avg_buy_price: number
+  current_price: number
+  current_value: number
+  unrealized_pnl: number
+  unrealized_pnl_pct: number
+}
+
+export interface TradeRequest {
+  ticker:     string
+  action:     'BUY' | 'SELL'
+  confidence: number
+  quantity:   number
+  trade_type: 'manual' | 'automated'
+}
+
+export interface TradeResult {
+  ticker: string
+  action: 'BUY' | 'SELL'
+  quantity: number
+  price: number
+  total_value: number
+  message: string
+}
+
+export interface NewsArticle {
+  title: string
+  url: string
+}
+
+export interface NewsSignal {
+  signal: 'BUY' | 'SELL' | 'HOLD'
+  sentiment: number
+  summary: string
+  articles: NewsArticle[]
+}
+
+export interface RagSource {
+  text: string
+  source: string
+  page: number
+  ticker: string | null
+  score: number
+}
+
+export interface FundamentalSignal {
+  signal: 'BUY' | 'SELL' | 'HOLD'
+  summary: string
+  sources: RagSource[]
+}
+
+export interface TechnicalSignal {
+  signal: 'BUY' | 'SELL' | 'HOLD'
+  summary: string
+  sources: RagSource[]
+}
+
+export interface AnalyzeResponse {
+  ticker: string
+  decision: 'BUY' | 'SELL' | 'HOLD'
+  confidence: number
+  reasoning: string
+  news_signal: NewsSignal
+  fundamental_signal: FundamentalSignal
+  technical_signal: TechnicalSignal
+  trade_executed: boolean
+}
+
+export interface CandlePoint {
+  time: number   // unix timestamp (seconds)
+  open: number
+  high: number
+  low: number
+  close: number
+}
+
+// ─── Stock Detail API Functions ────────────────────────────────────────────
+
+export async function fetchPositions(token: string): Promise<Position[]> {
+  const res = await fetch(`${BASE_URL}/api/v1/portfolio/positions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Failed to fetch positions')
+  return res.json()
+}
+
+export async function fetchChart(
+  ticker: string,
+  token: string,
+  days: number = 90
+): Promise<CandlePoint[]> {
+  const res = await fetch(
+    `${BASE_URL}/api/v1/stocks/${ticker}/chart?resolution=D&days=${days}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  if (!res.ok) throw new Error('Failed to fetch chart data')
+  const data = await res.json()
+  // Backend returns { candles: [...] } — adjust if your shape differs
+  return (data.bars ?? []).map((b: {
+    timestamp: number
+    open: number
+    high: number
+    low: number
+    close: number
+  }) => ({
+    time: b.timestamp,
+    open: b.open,
+    high: b.high,
+    low: b.low,
+    close: b.close,
+  }))
+}
+
+export async function executeTrade(
+  req: TradeRequest,
+  token: string
+): Promise<TradeResult> {
+  const res = await fetch(`${BASE_URL}/api/v1/portfolio/trade`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(req),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail ?? 'Trade failed')
+  }
+  return res.json()
+}
+
+export async function analyzeStock(
+  ticker: string,
+  token: string
+): Promise<AnalyzeResponse> {
+  const res = await fetch(`${BASE_URL}/api/v1/stocks/analyze`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ ticker }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail ?? 'Analysis failed')
+  }
+  return res.json()
+}  
+
+// Watchlist types
+export interface WatchlistEntry {
+  ticker:        string
+  stop_loss_pct: number
+  added_at?:     string
+}
+
+export interface WatchlistResponse {
+  watchlist: WatchlistEntry[]
+}
+
+export async function fetchWatchlist(
+  list: WatchlistType,
+  token: string
+): Promise<WatchlistEntry[]> {
+  const res = await fetch(`${BASE_URL}/api/v1/watchlists/${list}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Failed to fetch watchlist')
+  const data = await res.json()
+  // backend returns { watchlist: [...] } or array directly — handle both
+  return Array.isArray(data) ? data : (data.watchlist ?? [])
+}
+
+export async function removeFromWatchlist(
+  ticker: string,
+  list: WatchlistType,
+  token: string
+): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/v1/watchlists/${list}/${ticker}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Failed to remove from watchlist')
+}
