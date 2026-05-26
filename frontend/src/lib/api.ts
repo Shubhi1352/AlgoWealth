@@ -127,6 +127,40 @@ export interface PortfolioSummary {
   total_trades: number
 }
 
+// ── Agent reasoning shapes ────────────────────────────────────────────────────
+
+export interface AgentSignalBase {
+  signal:  'BUY' | 'SELL' | 'HOLD'
+  summary: string
+}
+
+export interface NewsSignal extends AgentSignalBase {
+  sentiment: number
+  articles:  { title: string; url: string }[]
+}
+
+export interface AIReasoning {
+  decision:           string
+  confidence:         number
+  reasoning:          string
+  news_signal:        NewsSignal
+  technical_signal:   TechnicalSignal
+  fundamental_signal: FundamentalSignal
+}
+
+export interface ManualReasoning {
+  manual: true
+  note:   string
+}
+
+export type AgentReasoning = AIReasoning | ManualReasoning
+
+export function isManualTrade(r: AgentReasoning): r is ManualReasoning {
+  return 'manual' in r && r.manual === true
+}
+
+// ── Transaction ─────────────────────────────────────────────────────────────
+
 export interface Transaction {
   id: string
   ticker: string
@@ -135,8 +169,16 @@ export interface Transaction {
   price: number
   total_value: number
   confidence_score: number
-  agent_reasoning?: AgentReasoning
+  agent_reasoning: AgentReasoning
   timestamp: string
+}
+
+export async function fetchTransactions(token: string): Promise<Transaction[]> {
+  const res = await fetch(`${BASE_URL}/api/v1/portfolio/transactions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Failed to fetch transactions')
+  return res.json()
 }
 
 export interface RecommendedStock {
@@ -253,37 +295,16 @@ export interface RagSource {
   score: number
 }
 
-export interface FundamentalSignal {
+export interface FundamentalSignal extends AgentSignalBase {
   signal: 'BUY' | 'SELL' | 'HOLD'
   summary: string
   sources: RagSource[]
 }
 
-export interface TechnicalSignal {
+export interface TechnicalSignal extends AgentSignalBase{
   signal: 'BUY' | 'SELL' | 'HOLD'
   summary: string
   sources: RagSource[]
-}
-
-// ── Agent Reasoning types ─────────────────────────────────────────────────
-export interface AIReasoning {
-  decision: 'BUY' | 'SELL' | 'HOLD'
-  confidence: number
-  reasoning: string
-  news_signal: NewsSignal
-  technical_signal: TechnicalSignal
-  fundamental_signal: FundamentalSignal
-}
-
-export interface ManualReasoning {
-  manual: true
-  note: string
-}
-
-export type AgentReasoning = AIReasoning | ManualReasoning
-
-export function isManualTrade(reasoning: AgentReasoning | undefined): reasoning is ManualReasoning {
-  return reasoning != null && 'manual' in reasoning && reasoning.manual === true
 }
 
 export interface AnalyzeResponse {
@@ -306,14 +327,6 @@ export interface CandlePoint {
 }
 
 // ─── Stock Detail API Functions ────────────────────────────────────────────
-
-export async function fetchTransactions(token: string): Promise<Transaction[]> {
-  const res = await fetch(`${BASE_URL}/api/v1/portfolio/transactions`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) throw new Error('Failed to fetch transactions')
-  return res.json()
-}
 
 export async function fetchPositions(token: string): Promise<Position[]> {
   const res = await fetch(`${BASE_URL}/api/v1/portfolio/positions`, {
