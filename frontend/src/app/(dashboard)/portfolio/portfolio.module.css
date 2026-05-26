@@ -1,0 +1,196 @@
+/* ─── Page shell ─────────────────────────────────────────────────────────── */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 28px 40px;
+  box-sizing: border-box;
+  isolation: isolate;
+}
+.page::-webkit-scrollbar { width: 4px; }
+.page::-webkit-scrollbar-track { background: transparent; }
+.page::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+/* ─── KPI strip ──────────────────────────────────────────────────────────── */
+.kpiStrip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.kpiCard {
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpiLabel {
+  font-size: 0.70rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.kpiValue {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+.kpiSub {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+/* ─── Table wrap ─────────────────────────────────────────────────────────── */
+.tableWrap {
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.tableHeader {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px 0;
+  margin-bottom: 4px;
+}
+
+.tableTitle {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.posCount {
+  background: rgba(127,255,212,0.15);
+  color: var(--color-accent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.table { width: 100%; }
+
+.loadingRows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px 20px;
+}
+
+/* ─── Empty state ────────────────────────────────────────────────────────── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 24px;
+  text-align: center;
+}
+.emptyIcon  { font-size: 2rem; }
+.emptyTitle { font-size: 1rem; font-weight: 600; color: var(--color-text-primary); margin: 0; }
+.emptySub   { font-size: 0.82rem; color: var(--color-text-muted); margin: 0; }
+.emptyLink  { color: var(--color-accent); text-decoration: none; }
+.emptyLink:hover { text-decoration: underline; }
+
+/* ─── Table rows ─────────────────────────────────────────────────────────── */
+.row { transition: background 0.12s; }
+.row:hover { background: rgba(255,255,255,0.03); }
+
+.tickerCell {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.tickerBadge {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.tickerBadge::after {
+  content: ' →';
+  opacity: 0;
+  transition: opacity 0.15s;
+  font-size: 0.75rem;
+}
+.tickerCell:hover .tickerBadge::after {
+  opacity: 1;
+}
+.tickerCell:hover .tickerBadge {
+  background: rgba(127,255,212,0.10);
+  border-color: rgba(127,255,212,0.30);
+  color: var(--color-accent);
+}
+
+.numCell {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pnlCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pnlPct { font-size: 0.72rem; }
+
+/* ─── Allocation bar ─────────────────────────────────────────────────────── */
+.barCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+}
+
+.barTrack {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+  opacity: 0.7;
+}
+
+.barPct {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
+}

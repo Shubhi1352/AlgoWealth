@@ -13,6 +13,7 @@ from app.models.watchlist import (
     AutomatedWatchlistResponse,
     WatchlistAdd,
     WatchlistResponse,
+    StopLossPatchRequest,
 )
 from app.services.watchlist_service import WatchlistService
 
@@ -139,3 +140,28 @@ async def get_b(
     """Get all stocks in watchlist B."""
     items = await service.get_b(user_id)
     return WatchlistResponse(items=items, count=len(items))
+
+
+@router.patch("/automated/{ticker}/stop-loss", status_code=status.HTTP_200_OK)
+async def update_stop_loss(
+    ticker: str,
+    payload: StopLossPatchRequest,
+    user_id: str = Depends(get_current_user_id),
+    service: WatchlistService = Depends(get_watchlist_service),
+) -> dict:
+    """
+    Update stop_loss_pct for a single ticker in place.
+    Preserves stop_loss_price — no DELETE + re-POST needed.
+    """
+    updated = await service.update_stop_loss_pct(
+        user_id, ticker, payload.stop_loss_pct
+    )
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{ticker.upper()} not found in your automated watchlist",
+        )
+    return {
+        "message": f"Stop loss updated for {ticker.upper()}",
+        "item": updated.model_dump(),
+    }

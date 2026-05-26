@@ -13,9 +13,11 @@ import {
   type WatchlistEntry,
   type Position,
   type StockDetail,
+  fetchStockDetail,
+  updateStopLoss,
 } from '@/lib/api'
 import FloatingElement  from '@/components/elements/FloatingElement'
-import { Lighthouse }   from '@/components/elements/shapes'
+import { TreasureChest }   from '@/components/elements/shapes'
 import styles           from './automated.module.css'
 
 const API = process.env.NEXT_PUBLIC_API_URL
@@ -79,11 +81,7 @@ export default function AutomatedWatchlistPage() {
 
     Promise.all(
       watchlist.map(entry =>
-        fetch(`${API}/api/v1/watchlists/watchlists/automated`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then(r => r.ok ? r.json() as Promise<StockDetail> : null)
-          .catch(() => null)
+        fetchStockDetail(entry.ticker, token).catch(() => null)
       )
     ).then(details => {
       const posMap = Object.fromEntries(
@@ -116,34 +114,49 @@ export default function AutomatedWatchlistPage() {
 
   // ── Stop loss save: DELETE then re-POST with new pct ─────────────────────
   const handleSlSave = useCallback(async (ticker: string, draft: string) => {
-    const pct = parseFloat(draft)
-    if (isNaN(pct) || pct <= 0 || pct > 100 || !token) return
+  const pct = parseFloat(draft)
+  if (isNaN(pct) || pct <= 0 || pct > 100 || !token) return
 
-    setSlLoading(prev => ({ ...prev, [ticker]: true }))
-    try {
-      await removeFromWatchlist(ticker, 'automated', token)
-      await addToWatchlist(ticker, 'automated', token, pct / 100)
-      setSlEditing(prev => { const n = { ...prev }; delete n[ticker]; return n })
-      mutateWatchlist()
-    } catch {
-      // keep edit open on error
-    } finally {
-      setSlLoading(prev => ({ ...prev, [ticker]: false }))
-    }
-  }, [token, mutateWatchlist])
+  setSlLoading(prev => ({ ...prev, [ticker]: true }))
+
+  // ── Optimistic update: patch just this row immediately ──────────────────
+  setRows(prev => prev.map(r =>
+    r.entry.ticker === ticker
+      ? { ...r, entry: { ...r.entry, stop_loss_pct: pct / 100 } }
+      : r
+  ))
+  // Close the edit input right away — no waiting
+  setSlEditing(prev => { const n = { ...prev }; delete n[ticker]; return n })
+
+  try {
+    await updateStopLoss(ticker, pct / 100, token)
+    // Success — rows already show correct value, nothing else needed
+  } catch {
+    // Rollback: re-fetch to restore server state
+    mutateWatchlist()
+  } finally {
+    setSlLoading(prev => ({ ...prev, [ticker]: false }))
+  }
+}, [token, mutateWatchlist])
 
   // ── Remove ────────────────────────────────────────────────────────────────
   const handleRemove = useCallback(async (ticker: string) => {
-    if (!token) return
-    setRemoving(prev => ({ ...prev, [ticker]: true }))
-    try {
-      await removeFromWatchlist(ticker, 'automated', token)
-      mutateWatchlist()
-      mutatePositions()
-    } catch {
-      setRemoving(prev => ({ ...prev, [ticker]: false }))
-    }
-  }, [token, mutateWatchlist, mutatePositions])
+  if (!token) return
+  setRemoving(prev => ({ ...prev, [ticker]: true }))
+
+  // ── Optimistic update: remove row immediately ───────────────────────────
+  setRows(prev => prev.filter(r => r.entry.ticker !== ticker))
+
+  try {
+    await removeFromWatchlist(ticker, 'automated', token)
+    mutateWatchlist()      // background sync to keep SWR cache consistent
+    mutatePositions()
+  } catch {
+    // Rollback: re-fetch restores the row
+    mutateWatchlist()
+    setRemoving(prev => ({ ...prev, [ticker]: false }))
+  }
+}, [token, mutateWatchlist, mutatePositions])
 
   // ── Add ticker ────────────────────────────────────────────────────────────
   const handleAdd = useCallback(async () => {
@@ -174,8 +187,8 @@ export default function AutomatedWatchlistPage() {
 
   return (
     <>
-      <FloatingElement bottom="8%" right="60px" animVariant="slow">
-        <Lighthouse />
+      <FloatingElement bottom="2%" left="80px" animVariant="slow">
+        <TreasureChest />
       </FloatingElement>
 
       <div className={styles.page}>
@@ -192,7 +205,7 @@ export default function AutomatedWatchlistPage() {
           {/* Add ticker */}
           <div className={styles.addRow}>
             <input
-              className={`aw-input ${styles.addInput}`}
+              className={`aw-input ${styles.addInput} border-blue-300`}
               placeholder="Ticker (e.g. AAPL)"
               value={addTicker}
               onChange={e => setAddTicker(e.target.value.toUpperCase())}
@@ -200,7 +213,7 @@ export default function AutomatedWatchlistPage() {
               maxLength={8}
             />
             <input
-              className={`aw-input ${styles.slInput}`}
+              className={`aw-input ${styles.slInput} border-blue-300`}
               placeholder="SL %"
               type="number"
               min="0.1"
@@ -382,17 +395,16 @@ export default function AutomatedWatchlistPage() {
                             />
                             <span className={styles.slPctSymbol}>%</span>
                             <button
-                              className={styles.slSaveBtn}
-                              onClick={() => handleSlSave(entry.ticker, slEditing[entry.ticker])}
-                              disabled={isSlLoad}
+                              className={styles.slBadge}
+                              onClick={() => setSlEditing(prev => ({ ...prev, [entry.ticker]: slPct }))}
+                              title="Click to edit stop loss"
                             >
-                              {isSlLoad ? '…' : '✓'}
-                            </button>
-                            <button
-                              className={styles.slCancelBtn}
-                              onClick={() => setSlEditing(prev => { const n = { ...prev }; delete n[entry.ticker]; return n })}
-                            >
-                              ✕
+                              {slPct}%
+                              {entry.stop_loss_price && (
+                                <span className={styles.slPrice}>
+                                  ${fmtPrice(entry.stop_loss_price)}
+                                </span>
+                              )}
                             </button>
                           </div>
                         ) : (

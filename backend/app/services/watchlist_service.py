@@ -210,3 +210,27 @@ class WatchlistService:
                 )
             )
         return items
+
+
+    async def update_stop_loss_pct(
+        self, user_id: str, ticker: str, stop_loss_pct: float
+    ) -> AutomatedWatchlistItem | None:
+        """
+        Update stop_loss_pct in place — preserves stop_loss_price.
+        Returns the updated item, or None if ticker not found.
+        """
+        ticker = ticker.upper().strip()
+        result = await self.db[COLLECTION_AUTOMATED].find_one_and_update(
+            {"user_id": user_id, "ticker": ticker},
+            {"$set": {"stop_loss_pct": stop_loss_pct}},
+            return_document=True,   # returns the document AFTER update
+        )
+        if not result:
+            return None
+        return AutomatedWatchlistItem(
+            ticker=result["ticker"],
+            stop_loss_pct=result["stop_loss_pct"],
+            stop_loss_price=result.get("stop_loss_price"),
+            active=result["active"],
+            added_at=result["added_at"],
+        )

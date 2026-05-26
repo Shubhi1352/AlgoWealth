@@ -1,13 +1,18 @@
 import FloatingElement from '@/components/elements/FloatingElement'
 import { Fish } from '@/components/elements/shapes'
+import styles from './auth.module.css'
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-6">
+    <div className={styles.shell}>
       <FloatingElement bottom="12%" left="8%" animVariant="swim">
         <Fish />
       </FloatingElement>
-      <div className="w-full max-w-md animate-fade-in">
+      <div className={styles.content}>
         {children}
       </div>
     </div>

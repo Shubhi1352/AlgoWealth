@@ -53,3 +53,8 @@ class AutomatedWatchlistResponse(BaseModel):
     """Response for the automated watchlist."""
     items: list[AutomatedWatchlistItem]
     count: int
+
+
+class StopLossPatchRequest(BaseModel):
+    """Body for PATCH /automated/{ticker}/stop-loss"""
+    stop_loss_pct: float = Field(..., gt=0, le=1, description="Stop loss as decimal e.g. 0.05 = 5%")

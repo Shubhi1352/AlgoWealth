@@ -135,7 +135,7 @@ export interface Transaction {
   price: number
   total_value: number
   confidence_score: number
-  agent_reasoning?: Record<string, unknown>
+  agent_reasoning?: AgentReasoning
   timestamp: string
 }
 
@@ -204,34 +204,6 @@ export interface StockDetail {
   company: CompanyProfile
 }
 
-// ─── Watchlist ────────────────────────────────────────────────────────────────
-
-export type WatchlistType = 'automated' | 'a' | 'b'
-
-export async function addToWatchlist(
-  ticker: string,
-  list: WatchlistType,
-  token: string,
-  stopLossPct: number = 0.05,
-): Promise<void> {
-  const body = list === 'automated'
-    ? { ticker, stop_loss_pct: stopLossPct }
-    : { ticker }
-  
-  const res = await fetch(`${BASE_URL}/api/v1/watchlists/watchlists/${list}`, {
-    method:  'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err?.detail ?? `Failed to add ${ticker} to watchlist`)
-  }
-}
-
 // ─── Stock Detail Types ────────────────────────────────────────────────────
 
 export interface Position {
@@ -293,6 +265,27 @@ export interface TechnicalSignal {
   sources: RagSource[]
 }
 
+// ── Agent Reasoning types ─────────────────────────────────────────────────
+export interface AIReasoning {
+  decision: 'BUY' | 'SELL' | 'HOLD'
+  confidence: number
+  reasoning: string
+  news_signal: NewsSignal
+  technical_signal: TechnicalSignal
+  fundamental_signal: FundamentalSignal
+}
+
+export interface ManualReasoning {
+  manual: true
+  note: string
+}
+
+export type AgentReasoning = AIReasoning | ManualReasoning
+
+export function isManualTrade(reasoning: AgentReasoning | undefined): reasoning is ManualReasoning {
+  return reasoning != null && 'manual' in reasoning && reasoning.manual === true
+}
+
 export interface AnalyzeResponse {
   ticker: string
   decision: 'BUY' | 'SELL' | 'HOLD'
@@ -313,6 +306,14 @@ export interface CandlePoint {
 }
 
 // ─── Stock Detail API Functions ────────────────────────────────────────────
+
+export async function fetchTransactions(token: string): Promise<Transaction[]> {
+  const res = await fetch(`${BASE_URL}/api/v1/portfolio/transactions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Failed to fetch transactions')
+  return res.json()
+}
 
 export async function fetchPositions(token: string): Promise<Position[]> {
   const res = await fetch(`${BASE_URL}/api/v1/portfolio/positions`, {
@@ -387,28 +388,53 @@ export async function analyzeStock(
   return res.json()
 }  
 
-// Watchlist types
+// ── Watchlist types ───────────────────────────────────────────────────────────
+
 export interface WatchlistEntry {
-  ticker:        string
-  stop_loss_pct: number
-  added_at?:     string
+  ticker:          string
+  stop_loss_pct:   number
+  stop_loss_price: number | null
+  active:          boolean
+  added_at?:       string
 }
 
-export interface WatchlistResponse {
-  watchlist: WatchlistEntry[]
-}
+export type WatchlistType = 'automated' | 'a' | 'b'
+
+// ── Watchlist fetchers ────────────────────────────────────────────────────────
 
 export async function fetchWatchlist(
   list: WatchlistType,
   token: string
 ): Promise<WatchlistEntry[]> {
-  const res = await fetch(`${BASE_URL}/api/v1/watchlists/${list}`, {
+  const res = await fetch(`${BASE_URL}/api/v1/watchlists/watchlists/${list}`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) throw new Error('Failed to fetch watchlist')
   const data = await res.json()
-  // backend returns { watchlist: [...] } or array directly — handle both
-  return Array.isArray(data) ? data : (data.watchlist ?? [])
+  if (Array.isArray(data))       return data
+  if (Array.isArray(data.items)) return data.items
+  return data.watchlist ?? []
+}
+
+export async function addToWatchlist(
+  ticker: string,
+  list: WatchlistType,
+  token: string,
+  stopLossPct: number = 0.05
+): Promise<void> {
+  const body = list === 'automated'
+    ? { ticker, stop_loss_pct: stopLossPct }
+    : { ticker }
+
+  const res = await fetch(`${BASE_URL}/api/v1/watchlists/watchlists/${list}`, {
+    method:  'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error('Failed to add to watchlist')
 }
 
 export async function removeFromWatchlist(
@@ -416,9 +442,42 @@ export async function removeFromWatchlist(
   list: WatchlistType,
   token: string
 ): Promise<void> {
-  const res = await fetch(`${BASE_URL}/api/v1/watchlists/${list}/${ticker}`, {
-    method: 'DELETE',
+  const res = await fetch(
+    `${BASE_URL}/api/v1/watchlists/watchlists/${list}/${ticker}`,
+    {
+      method:  'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  )
+  if (!res.ok) throw new Error('Failed to remove from watchlist')
+}
+
+export async function fetchStockDetail(
+  ticker: string,
+  token: string
+): Promise<StockDetail> {
+  const res = await fetch(`${BASE_URL}/api/v1/stocks/${ticker}`, {
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) throw new Error('Failed to remove from watchlist')
+  if (!res.ok) throw new Error(`Failed to fetch ${ticker}`)
+  return res.json()
+}
+
+export async function updateStopLoss(
+  ticker: string,
+  stopLossPct: number,   // decimal e.g. 0.05 for 5%
+  token: string
+): Promise<void> {
+  const res = await fetch(
+    `${BASE_URL}/api/v1/watchlists/watchlists/automated/${ticker}/stop-loss`,
+    {
+      method:  'PATCH',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ stop_loss_pct: stopLossPct }),
+    }
+  )
+  if (!res.ok) throw new Error('Failed to update stop loss')
 }
