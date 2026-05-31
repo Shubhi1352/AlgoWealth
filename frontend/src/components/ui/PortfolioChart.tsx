@@ -40,7 +40,7 @@ function buildPoints(snapshots: PortfolioSnapshot[]): ChartPoint[] {
   })
 }
 
-function CustomTooltip({ active, payload, label }: TooltipProps<ValueType, NameType>) {
+function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   const val  = (payload[0]?.value as number) ?? 0
   const diff = val - STARTING_BALANCE

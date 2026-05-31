@@ -7,13 +7,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  type TooltipProps,
 } from 'recharts'
-import type {
-  ValueType,
-  NameType,
-} from 'recharts/types/component/DefaultTooltipContent'
-import type { Transaction } from '@/lib/api'
 import s from './PnLChart.module.css'
 import type { PortfolioSnapshot } from '@/lib/api'
 
@@ -21,6 +15,12 @@ import type { PortfolioSnapshot } from '@/lib/api'
 interface ChartPoint {
   date: string
   value: number
+}
+
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: Array<{ value: number; name: string }>
+  label?: string
 }
 
 interface PnLChartProps {
@@ -79,7 +79,7 @@ function fmt(n: number): string {
 }
 
 // ── Custom tooltip ─────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: TooltipProps<ValueType, NameType>) {
+function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   const val = (payload[0]?.value as number) ?? 0
   const diff = val - STARTING_BALANCE
