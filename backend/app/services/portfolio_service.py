@@ -17,16 +17,13 @@ from app.models.portfolio import Position, PortfolioSummary, Transaction
 from app.services.stock_service import get_stock_price, get_fresh_price
 from app.services.snapshot_service import save_snapshot
 from typing import Literal
+from app.models.user import RISK_CONFIG
 
 # MongoDB collection names
 USERS_COLLECTION = "users"
 POSITIONS_COLLECTION = "positions"
 TRANSACTIONS_COLLECTION = "transactions"
 TRADE_TYPE = Literal["manual", "automated"]
-
-# Position sizing: max % of available cash per trade
-MAX_POSITION_SIZE_PCT = 0.10   # 10% of available cash per trade
-
 
 async def _update_stop_loss_price(db, user_id: str, ticker: str, buy_price: float) -> None:
     """
@@ -53,45 +50,21 @@ async def _update_stop_loss_price(db, user_id: str, ticker: str, buy_price: floa
 
 
 async def execute_trade(
-    user_id: str,
-    ticker: str,
-    action: str,
-    confidence: float,
+    user_id:         str,
+    ticker:          str,
+    action:          str,
+    confidence:      float,
     agent_reasoning: dict,
-    trade_type: TRADE_TYPE = "automated",
-    quantity: float = 0.0,
+    trade_type:      TRADE_TYPE = "automated",
+    quantity:        float = 0.0,
+    risk_appetite:   str = "Moderate",   # ← new
     db=None,
 ) -> Transaction:
-    """
-    Execute a paper trade based on agent decision.
-
-    For automated trades: position size = confidence × MAX_POSITION_SIZE_PCT × cash
-    For manual trades: quantity field used directly as share count
-
-    Args:
-        user_id:         Authenticated user's ID.
-        ticker:          Stock ticker e.g. "NVDA".
-        action:          "BUY" or "SELL".
-        confidence:      Agent confidence 0.0–1.0.
-        agent_reasoning: Reasoning dict from Synthesis Agent or {"manual": True}.
-        trade_type:      "manual" or "automated" — controls sizing logic.
-        quantity:        Share count for manual trades (fractional allowed).
-        db:              Injected MongoDB client.
-
-    Returns:
-        Completed Transaction record.
-
-    Raises:
-        ValueError: Insufficient balance, no position, invalid action, bad quantity.
-    """
     if db is None:
         db = get_database()
 
-    # ── Fetch current price ───────────────────────────────────────────────────
-    price = await get_fresh_price(ticker)
-
-    # ── Get user's current balance ────────────────────────────────────────────
-    user = await db[USERS_COLLECTION].find_one({"id": user_id})
+    price        = await get_fresh_price(ticker)
+    user         = await db[USERS_COLLECTION].find_one({"id": user_id})
     if not user:
         raise ValueError(f"User not found: {user_id}")
 
@@ -101,47 +74,46 @@ async def execute_trade(
         transaction = await _execute_buy(
             db, user_id, ticker, price, confidence,
             cash_balance, agent_reasoning,
-            trade_type=trade_type, manual_quantity=quantity,
+            trade_type=trade_type,
+            manual_quantity=quantity,
+            risk_appetite=risk_appetite,   # ← new
         )
     elif action == "SELL":
         transaction = await _execute_sell(
             db, user_id, ticker, price, confidence,
             agent_reasoning,
-            trade_type=trade_type, manual_quantity=quantity,
+            trade_type=trade_type,
+            manual_quantity=quantity,
         )
     else:
         raise ValueError(f"Invalid action: {action}. Must be BUY or SELL.")
 
-    # Snapshot after every trade — fire and forget, never blocks the response
     await save_snapshot(user_id=user_id, db=db, trigger="trade")
-
     return transaction
 
 
 async def _execute_buy(
-    db, user_id, ticker, price, confidence, cash_balance, agent_reasoning, trade_type: str, manual_quantity: float,
+    db, user_id, ticker, price, confidence, cash_balance,
+    agent_reasoning, trade_type: str, manual_quantity: float,
+    risk_appetite: str = "Moderate",   # ← new
 ) -> Transaction:
-    """Execute a BUY order."""
-
-    # ── Calculate position size ───────────────────────────────────────────────
     if trade_type == "manual":
         if manual_quantity <= 0:
             raise ValueError("quantity must be greater than 0 for manual trades")
-        quantity   = manual_quantity
+        quantity    = manual_quantity
         trade_value = round(quantity * price, 2)
     else:
-        trade_value = confidence * MAX_POSITION_SIZE_PCT * cash_balance
-        quantity    = trade_value / price
+        # ── Risk-aware position sizing ─────────────────────────────────────
+        position_size_pct = RISK_CONFIG[risk_appetite]["position_size_pct"]
+        trade_value       = confidence * position_size_pct * cash_balance
+        quantity          = trade_value / price
+        print(f"  📐 Position sizing: {risk_appetite} | {position_size_pct:.0%} × {confidence:.0%} conf = ${trade_value:.2f}")
 
     if trade_value > cash_balance:
-        raise ValueError(
-            f"Insufficient balance. Need ${trade_value:.2f}, have ${cash_balance:.2f}"
-        )
-
+        raise ValueError(f"Insufficient balance. Need ${trade_value:.2f}, have ${cash_balance:.2f}")
     if quantity < 0.0001:
         raise ValueError("Position size too small to execute")
 
-    # ── Record transaction ────────────────────────────────────────────────────
     transaction = Transaction(
         user_id=user_id,
         ticker=ticker,
@@ -154,24 +126,18 @@ async def _execute_buy(
     )
     await db[TRANSACTIONS_COLLECTION].insert_one(transaction.model_dump())
 
-    # ── Update or create position ─────────────────────────────────────────────
-    existing = await db[POSITIONS_COLLECTION].find_one(
-        {"user_id": user_id, "ticker": ticker}
-    )
-
+    existing = await db[POSITIONS_COLLECTION].find_one({"user_id": user_id, "ticker": ticker})
     if existing:
-        # Average down/up: recalculate avg buy price
         old_qty = float(existing["quantity"])
         old_avg = float(existing["avg_buy_price"])
         new_qty = old_qty + quantity
         new_avg = ((old_qty * old_avg) + (quantity * price)) / new_qty
-
         await db[POSITIONS_COLLECTION].update_one(
             {"user_id": user_id, "ticker": ticker},
             {"$set": {
-                "quantity": round(new_qty, 6),
+                "quantity":      round(new_qty, 6),
                 "avg_buy_price": round(new_avg, 2),
-                "updated_at": datetime.now(timezone.utc),
+                "updated_at":    datetime.now(timezone.utc),
             }}
         )
     else:
@@ -183,18 +149,14 @@ async def _execute_buy(
         )
         await db[POSITIONS_COLLECTION].insert_one(position.model_dump())
 
-    # ── Deduct from balance ───────────────────────────────────────────────────
     await db[USERS_COLLECTION].update_one(
         {"id": user_id},
         {"$inc": {"virtual_balance": -trade_value}}
     )
 
-    print(f"  ✅ BUY executed user={user_id} ticker={ticker} qty={quantity:.4f} price={price:.2f} type={trade_type}")
-    
+    print(f"  ✅ BUY executed user={user_id} ticker={ticker} qty={quantity:.4f} price={price:.2f} type={trade_type} risk={risk_appetite}")
     await _update_stop_loss_price(db, user_id, ticker, price)
-
     return transaction
-
 
 async def _execute_sell(
     db, user_id, ticker, price, confidence, agent_reasoning, trade_type: str, manual_quantity: float,

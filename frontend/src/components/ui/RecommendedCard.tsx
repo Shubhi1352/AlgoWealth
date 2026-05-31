@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import type { RecommendedStock } from '@/lib/api'
 import s from './RecommendedCard.module.css'
+import { useState } from 'react'
 
 interface RecommendedCardProps {
   recommendations: RecommendedStock[]
   generatedAt?: string | null
   loading?: boolean
-  onAddToWatchlist?: (ticker: string, type: 'automated' | 'a') => void
+  onAddToWatchlist?: (ticker: string, type: 'automated' | 'a' | 'b') => Promise<void>
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
@@ -35,6 +36,8 @@ function ScoreBar({ score }: { score: number }) {
   )
 }
 
+type BtnState = 'idle' | 'ok' | 'err'
+
 function RecommendationRow({
   rec,
   rank,
@@ -42,16 +45,33 @@ function RecommendationRow({
 }: {
   rec: RecommendedStock
   rank: number
-  onAddToWatchlist?: (ticker: string, type: 'automated' | 'a') => void
+  onAddToWatchlist?: (ticker: string, type: 'automated' | 'a' | 'b') => Promise<void>
 }) {
-  const pct        = Math.round(rec.final_score * 100)
-  const priceStr   = rec.current_price > 0
-    ? `$${rec.current_price.toFixed(2)}`
-    : null
-  const changeStr  = rec.price_change_pct !== 0
+  const [autoState,  setAutoState]  = useState<BtnState>('idle')
+  const [watchAState, setWatchAState] = useState<BtnState>('idle')
+  const [watchBState, setWatchBState] = useState<BtnState>('idle')
+
+  async function handleClick(
+    type: 'automated' | 'a' | 'b',
+    setState: (s: BtnState) => void
+  ) {
+    if (!onAddToWatchlist) return
+    try {
+      await onAddToWatchlist(rec.ticker, type)
+      setState('ok')
+    } catch {
+      setState('err')
+    } finally {
+      setTimeout(() => setState('idle'), 2000)
+    }
+  }
+
+  const pct       = Math.round(rec.final_score * 100)
+  const priceStr  = rec.current_price > 0 ? `$${rec.current_price.toFixed(2)}` : null
+  const changeStr = rec.price_change_pct !== 0
     ? `${rec.price_change_pct >= 0 ? '+' : ''}${rec.price_change_pct.toFixed(1)}%`
     : null
-  const isUp       = rec.price_change_pct >= 0
+  const isUp = rec.price_change_pct >= 0
 
   return (
     <div className={s.row}>
@@ -65,7 +85,6 @@ function RecommendationRow({
             </Link>
             <SignalBadge signal={rec.news_signal} />
           </div>
-          {/* Score bar */}
           <div className={s.scoreRow}>
             <ScoreBar score={rec.final_score} />
             <span className={s.scorePct}>{pct}%</span>
@@ -79,26 +98,34 @@ function RecommendationRow({
           <div className={s.priceBlock}>
             <span className={s.price}>{priceStr}</span>
             {changeStr && (
-              <span className={isUp ? s.changeUp : s.changeDown}>
-                {changeStr}
-              </span>
+              <span className={isUp ? s.changeUp : s.changeDown}>{changeStr}</span>
             )}
           </div>
         )}
         <div className={s.actions}>
           <button
-            className={s.btnAuto}
-            onClick={() => onAddToWatchlist?.(rec.ticker, 'automated')}
+            className={`${s.btnAuto} ${autoState === 'ok' ? s.btnOk : autoState === 'err' ? s.btnErr : ''}`}
+            onClick={() => handleClick('automated', setAutoState)}
             title="Add to Automated Watchlist"
+            disabled={autoState !== 'idle'}
           >
-            Auto
+            {autoState === 'ok' ? '✓' : autoState === 'err' ? '✕' : 'Auto'}
           </button>
           <button
-            className={s.btnWatch}
-            onClick={() => onAddToWatchlist?.(rec.ticker, 'a')}
+            className={`${s.btnWatch} ${watchAState === 'ok' ? s.btnOk : watchAState === 'err' ? s.btnErr : ''}`}
+            onClick={() => handleClick('a', setWatchAState)}
             title="Add to Watchlist A"
+            disabled={watchAState !== 'idle'}
           >
-            Watch
+            {watchAState === 'ok' ? '✓' : watchAState === 'err' ? '✕' : 'A'}
+          </button>
+          <button
+            className={`${s.btnWatch} ${watchBState === 'ok' ? s.btnOk : watchBState === 'err' ? s.btnErr : ''}`}
+            onClick={() => handleClick('b', setWatchBState)}
+            title="Add to Watchlist B"
+            disabled={watchBState !== 'idle'}
+          >
+            {watchBState === 'ok' ? '✓' : watchBState === 'err' ? '✕' : 'B'}
           </button>
         </div>
       </div>

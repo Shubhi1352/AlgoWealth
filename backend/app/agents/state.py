@@ -24,6 +24,7 @@ class AgentState(TypedDict):
     # ── Input ─────────────────────────────────────────────────────────────────
     ticker: str                          # Stock to analyze e.g. "NVDA"
     user_id: str                         # Who triggered the analysis
+    risk_appetite: str
 
     # ── Conversation history (append-only via add_messages reducer) ───────────
     messages: Annotated[list, add_messages]

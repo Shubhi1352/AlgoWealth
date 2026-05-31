@@ -9,6 +9,7 @@ import {
   type PortfolioSummary,
   type Transaction,
   type RecommendationsResponse,
+  addToWatchlist,
 } from '@/lib/api'
 import MetricCard from '@/components/ui/MetricCard'
 import PnLChart from '@/components/ui/PnLChart'
@@ -163,20 +164,7 @@ export default function DashboardPage() {
           recommendations={recData?.recommendations ?? []}
           generatedAt={recData?.generated_at}
           loading={recLoading}
-          onAddToWatchlist={async (ticker, type) => {
-            if (!token) return
-            const endpoint = type === 'automated'
-            ? `${API}/api/v1/watchlists/automated`
-            : `${API}/api/v1/watchlists/a`
-            await fetch(endpoint, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ ticker, stop_loss_pct: 0.05 }),
-            })
-          }}
+          onAddToWatchlist={(ticker, type) => addToWatchlist(ticker, type, token!)}
         />
       </div>
       {/* ── Shark creature — bottom left, below sidebar ── */}

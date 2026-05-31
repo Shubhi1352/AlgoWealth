@@ -32,19 +32,6 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: '/stocks/NVDA',  // placeholder ticker for detail page demo
-    label: 'Stock Detail',
-    title: 'Stock Detail',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <polyline points="2,14 6,9 10,11 14,5 18,7"
-          stroke="currentColor" strokeWidth="1.8"
-          strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-        <rect x="2" y="15" width="16" height="1.5" rx="0.75" fill="currentColor" opacity="0.3"/>
-      </svg>
-    ),
-  },
-  {
     href: '/watchlists/automated',
     label: 'Automated',
     title: 'Automated',
@@ -65,8 +52,8 @@ const NAV_ITEMS = [
   },
   {
     href: '/watchlists/a',
-    label: 'Watchlist A',
-    title: 'Watchlist',
+    label: 'Watchlists',
+    title: 'Watchlists',
     icon: (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <polygon points="10,2 12.4,7.5 18.5,8.2 14,12.5 15.4,18.5 10,15.5 4.6,18.5 6,12.5 1.5,8.2 7.6,7.5"
@@ -117,6 +104,8 @@ const NAV_ITEMS = [
   },
 ] as const
 
+const EXACT_MATCH_ROUTES = ['/portfolio', '/stocks', 'trades', '/profile', '/dashboard', '/watchlists/automated', '/watchlists/a']
+
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function Sidebar() {
   const pathname = usePathname()
@@ -130,10 +119,10 @@ export default function Sidebar() {
       {/* ── Item list ── */}
       <div className={s.itemList}>
         {NAV_ITEMS.map((item) => {
-          // Active if current path starts with item's base path
           const basePath = '/' + item.href.split('/').slice(1, 3).join('/')
-          const isActive = pathname === item.href ||
-            (item.href !== '/dashboard' && pathname.startsWith(basePath))
+          const isActive = EXACT_MATCH_ROUTES.includes(item.href)
+            ? pathname === item.href
+            : pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(basePath))
 
           return (
             <Link

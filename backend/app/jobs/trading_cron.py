@@ -82,19 +82,27 @@ async def _process_user_watchlist(db, user_id: str, market_open: bool) -> None:
     from app.services.trade_queue_service import TradeQueueService
     from app.services.portfolio_service import execute_trade
     from app.agents.graph import run_agent_pipeline   # Your existing LangGraph pipeline
+    from app.db.mongodb import USERS_COLLECTION
 
     watchlist_service = WatchlistService(db)
     queue_service = TradeQueueService(db)
 
+    user = await db[USERS_COLLECTION].find_one({"id": user_id})
+    if not user:
+        print(f"  ⚠️  User {user_id[:8]}... not found — skipping")
+        return
+
+    risk_appetite = user.get("risk_appetite", "Moderate")
+
     tickers = await watchlist_service.get_automated_tickers(user_id)
-    print(f"  👤 User {user_id[:8]}... — analyzing {len(tickers)} tickers: {tickers}")
+    print(f"  👤 User {user_id[:8]}... [{risk_appetite}] — analyzing {len(tickers)} tickers: {tickers}")
 
     for ticker in tickers:
         try:
             print(f"    🔍 Analyzing {ticker}...")
 
             # ── Run full agent pipeline ────────────────────────────────────────
-            result = await run_agent_pipeline(ticker=ticker, user_id=user_id)
+            result = await run_agent_pipeline(ticker=ticker, user_id=user_id, risk_appetite=risk_appetite)
 
             decision = result.get("decision")
             confidence = result.get("confidence", 0.0)
@@ -115,6 +123,7 @@ async def _process_user_watchlist(db, user_id: str, market_open: bool) -> None:
                     action=decision,
                     confidence=confidence,
                     agent_reasoning=reasoning,
+                    risk_appetite=risk_appetite,
                     db=db,
                 )
                 print(f"    ✅ {ticker}: {decision} executed")
@@ -125,6 +134,7 @@ async def _process_user_watchlist(db, user_id: str, market_open: bool) -> None:
                     action=decision,
                     confidence=confidence,
                     agent_reasoning=reasoning,
+                    risk_appetite=risk_appetite,
                     source="automated",
                 )
                 print(f"    🕐 {ticker}: {decision} queued (market closed)")

@@ -10,8 +10,12 @@ from pydantic import BaseModel
 from app.services.trade_queue_service import TradeQueueService
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import Literal
+import asyncio
+from app.services.portfolio_service import save_snapshot
+from app.models.user import RiskAppetite, RISK_CONFIG
 
 from app.core.dependencies import get_current_user_id, get_db
+from app.db.mongodb import get_database
 from app.models.portfolio import PortfolioSummary
 from app.services.portfolio_service import (
     execute_trade,
@@ -123,3 +127,61 @@ async def get_portfolio_history(
     ).sort("date", 1).to_list(length=365)
 
     return {"history": snapshots}
+
+
+@router.post("/reset", status_code=200)
+async def reset_portfolio(
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+) -> dict:
+    """
+    Restore the user's cash balance to the starting amount.
+    Positions and transaction history are preserved.
+    """
+    STARTING_BALANCE = 100_000.00
+
+    await db.users.update_one(
+        {"_id": user_id},
+        {"$set": {"virtual_balance": STARTING_BALANCE}}
+    )
+
+    await save_snapshot(user_id, db, trigger="reset")
+
+    return {"message": "Cash balance reset successfully", "cash_balance": STARTING_BALANCE}
+
+
+class PreferencesUpdate(BaseModel):
+    risk_appetite: RiskAppetite
+
+@router.patch("/preferences", response_model=dict)
+async def update_preferences(
+    body: PreferencesUpdate,
+    user_id: str = Depends(get_current_user_id),
+) -> dict:
+    """Update the user's trading risk appetite."""
+    db = get_database()
+    await db["users"].update_one(
+        {"id": user_id},
+        {"$set": {"risk_appetite": body.risk_appetite}}
+    )
+    config = RISK_CONFIG[body.risk_appetite]
+    return {
+        "risk_appetite":        body.risk_appetite,
+        "confidence_threshold": config["confidence_threshold"],
+        "position_size_pct":    config["position_size_pct"],
+    }
+
+
+@router.get("/me", response_model=dict)
+async def get_me(user_id: str = Depends(get_current_user_id)) -> dict:
+    db = get_database()
+    user = await db["users"].find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "user_id":      user_id,
+        "email":        user["email"],
+        "created_at":   user["created_at"].isoformat(),
+        "risk_appetite": user.get("risk_appetite", "Moderate"),
+        "message":      "Token is valid",
+    }

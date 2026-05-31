@@ -45,54 +45,36 @@ def build_trading_graph() -> StateGraph:
 # Module-level compiled graph — built once, invoked many times
 trading_graph = build_trading_graph()
 
-
-async def run_agent_pipeline(ticker: str, user_id: str) -> dict:
-    """
-    Reusable wrapper around the trading graph — called by both:
-      - POST /stocks/analyze (manual, user-triggered)
-      - Automated trading cron (scheduled, system-triggered)
-
-    Args:
-        ticker:  Stock symbol e.g. "NVDA"
-        user_id: The user this analysis is for.
-
-    Returns:
-        dict with keys: decision, confidence, reasoning,
-                        news_signal, fundamental_signal, technical_signal,
-                        agent_reasoning (combined dict for trade storage)
-
-    Raises:
-        Exception: Propagated up — caller decides how to handle.
-    """
+async def run_agent_pipeline(ticker: str, user_id: str, risk_appetite: str = "Moderate") -> dict:
     result = await trading_graph.ainvoke({
-        "ticker": ticker,
-        "user_id": user_id,
-        "messages": [],
-        "news_signal": {},
+        "ticker":        ticker,
+        "user_id":       user_id,
+        "risk_appetite": risk_appetite,   # ← new
+        "messages":      [],
+        "news_signal":        {},
         "fundamental_signal": {},
-        "technical_signal": {},
-        "decision": None,
+        "technical_signal":   {},
+        "decision":   None,
         "confidence": 0.0,
-        "reasoning": "",
-        "next": "",
+        "reasoning":  "",
+        "next":       "",
     })
 
-    # Build the combined reasoning dict — stored in transactions + trade queue
     agent_reasoning = {
-        "decision": result["decision"],
-        "confidence": result["confidence"],
-        "reasoning": result["reasoning"],
-        "news_signal": result["news_signal"],
-        "technical_signal": result["technical_signal"],
+        "decision":           result["decision"],
+        "confidence":         result["confidence"],
+        "reasoning":          result["reasoning"],
+        "news_signal":        result["news_signal"],
+        "technical_signal":   result["technical_signal"],
         "fundamental_signal": result["fundamental_signal"],
     }
 
     return {
-        "decision": result["decision"],
-        "confidence": result["confidence"],
-        "reasoning": result["reasoning"],
-        "news_signal": result["news_signal"],
+        "decision":           result["decision"],
+        "confidence":         result["confidence"],
+        "reasoning":          result["reasoning"],
+        "news_signal":        result["news_signal"],
         "fundamental_signal": result["fundamental_signal"],
-        "technical_signal": result["technical_signal"],
-        "agent_reasoning": agent_reasoning,
+        "technical_signal":   result["technical_signal"],
+        "agent_reasoning":    agent_reasoning,
     }

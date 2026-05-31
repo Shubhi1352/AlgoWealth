@@ -34,6 +34,7 @@ class TradeQueueService:
         confidence: float,
         agent_reasoning: dict,
         source: str = "automated",
+        risk_appetite: str = "Moderate",
     ) -> dict:
         """
         Add a trade to the pending queue.
@@ -59,6 +60,7 @@ class TradeQueueService:
             "queued_at": datetime.now(timezone.utc),
             "status": "pending",
             "source": source,
+            "risk_appetite": risk_appetite,
             "executed_at": None,
             "error": None,
         }
@@ -170,6 +172,7 @@ class TradeQueueService:
                     action=trade["action"],
                     confidence=trade["confidence"],
                     agent_reasoning=trade["agent_reasoning"],
+                    risk_appetite=trade.get("risk_appetite", "Moderate"),
                     db=self.db,
                 )
                 await self.mark_executed(trade_id)

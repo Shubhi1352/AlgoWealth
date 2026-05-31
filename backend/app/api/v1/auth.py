@@ -12,6 +12,7 @@ from app.models.user import UserCreate, UserResponse
 from app.services.auth_service import register_user, login_user
 from app.core.dependencies import get_current_user_id
 from fastapi import Depends
+from app.db.mongodb import get_database
 
 router = APIRouter()
 
@@ -61,12 +62,3 @@ async def login(credentials: LoginRequest) -> TokenResponse:
             detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
-
-
-@router.get("/me", response_model=dict)
-async def get_me(user_id: str = Depends(get_current_user_id)) -> dict:
-    """
-    Protected route — returns the current user's ID.
-    Proves the JWT dependency is working correctly.
-    """
-    return {"user_id": user_id, "message": "Token is valid"}

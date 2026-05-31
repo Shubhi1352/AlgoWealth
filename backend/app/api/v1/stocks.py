@@ -17,6 +17,7 @@ from app.core.market_hours import get_market_status
 from app.services.recommendation_service import RecommendationService
 from app.core.dependencies import get_db
 from app.jobs.discovery_cron import run_discovery_cron
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
 router = APIRouter()
 
@@ -40,22 +41,20 @@ class AnalysisResponse(BaseModel):
 
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_stock(
-    request: AnalysisRequest,
-    user_id: str = Depends(get_current_user_id),
+    request:  AnalysisRequest,
+    user_id:  str                  = Depends(get_current_user_id),
+    db:       AsyncIOMotorDatabase = Depends(get_db),
 ) -> AnalysisResponse:
-    """
-    Trigger full multi-agent analysis for a stock ticker.
-    Runs: News Agent → Fundamental Agent → Technical Agent → Synthesis Agent
-    """
     ticker = request.ticker.upper().strip()
     if not ticker:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ticker cannot be empty",
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ticker cannot be empty")
+
+    # ── Fetch user's risk preference ──────────────────────────────────────────
+    user = await db["users"].find_one({"id": user_id}, {"risk_appetite": 1})
+    risk_appetite = (user or {}).get("risk_appetite", "Moderate")
 
     try:
-        result = await run_agent_pipeline(ticker=ticker, user_id=user_id)
+        result = await run_agent_pipeline(ticker=ticker, user_id=user_id, risk_appetite=risk_appetite)
 
         transaction = None
         if result["decision"] in ("BUY", "SELL"):
@@ -66,6 +65,7 @@ async def analyze_stock(
                     action=result["decision"],
                     confidence=result["confidence"],
                     agent_reasoning=result["agent_reasoning"],
+                    risk_appetite=risk_appetite,
                 )
             except Exception as e:
                 print(f"  ⚠️ Trade execution failed: {type(e).__name__}: {e}")
@@ -82,10 +82,8 @@ async def analyze_stock(
         )
 
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Analysis failed: {str(e)}",
-        ) from e
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+        detail=f"Analysis failed: {str(e)}") from e
 
 
 @router.get("/market/status")

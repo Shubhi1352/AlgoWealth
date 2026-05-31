@@ -96,11 +96,11 @@ export async function loginUser(
 }
 
 /**
- * GET /api/v1/auth/me
+ * GET /api/v1/portfolio/me
  * Returns the current user's profile. Requires auth.
  */
 export async function getMe(): Promise<UserResponse> {
-  return request<UserResponse>('/api/v1/auth/me', {}, true)
+  return request<UserResponse>('/api/v1/portfolio/me', {}, true)
 }
 
 // ── Authorized fetcher for SWR ─────────────────────────────────────────────
@@ -493,4 +493,102 @@ export async function updateStopLoss(
     }
   )
   if (!res.ok) throw new Error('Failed to update stop loss')
+}
+
+// Reset portfolio
+
+export async function resetPortfolio(token: string): Promise<{ message: string; cash_balance: number }> {
+  const res = await fetch(`${BASE_URL}/api/v1/portfolio/reset`, {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail ?? 'Reset failed')
+  }
+  return res.json()
+}
+
+
+// ── Ingest / Knowledge Base ───────────────────────────────────────────────
+
+export interface IngestDocument {
+  id:            string
+  filename:      string
+  collection:    'trading_strategies' | 'financials'
+  chunks_count:  number
+  document_type: string
+  ingested_at:   string
+  ticker:        string | null
+  supersedes:    string | null
+}
+
+export interface IngestListResponse {
+  documents: IngestDocument[]
+  count:     number
+}
+
+export interface IngestUploadResponse {
+  message:         string
+  filename:        string
+  collection:      string
+  chunks_ingested: number
+  ticker:          string | null
+}
+
+export async function fetchDocuments(token: string): Promise<IngestListResponse> {
+  const res = await fetch(`${BASE_URL}/api/v1/ingest/documents`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Failed to fetch documents')
+  return res.json()
+}
+
+export async function deleteDocument(docId: string, token: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/v1/ingest/documents/${docId}`, {
+    method:  'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Failed to delete document')
+}
+
+export async function uploadDocument(
+  file:           File,
+  collection:     'trading_strategies' | 'financials',
+  token:          string,
+  ticker?:        string,
+  documentType?:  string,
+): Promise<IngestUploadResponse> {
+  const params = new URLSearchParams({ collection })
+  if (ticker)       params.set('ticker', ticker.toUpperCase())
+  if (documentType) params.set('document_type', documentType)
+
+  const form = new FormData()
+  form.append('file', file)
+
+  const res = await fetch(`${BASE_URL}/api/v1/ingest/document?${params}`, {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body:    form,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error((err as { detail?: string }).detail ?? 'Upload failed')
+  }
+  return res.json()
+}
+
+export async function updatePreferences(
+  riskAppetite: 'Conservative' | 'Moderate' | 'Aggressive',
+  token: string
+): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/v1/portfolio/preferences`, {
+    method:  'PATCH',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ risk_appetite: riskAppetite }),
+  })
+  if (!res.ok) throw new Error('Failed to update preferences')
 }
