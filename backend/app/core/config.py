@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_COLLECTION_STRATEGIES: str = "trading_strategies"
     QDRANT_COLLECTION_FINANCIALS: str = "financials"
+    QDRANT_API_KEY: str | None = None
 
     # ── Redis ─────────────────────────────────────────────────────────────────
     REDIS_URL: str = "redis://localhost:6379"

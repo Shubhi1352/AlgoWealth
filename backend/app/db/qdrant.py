@@ -35,7 +35,10 @@ async def connect_qdrant() -> None:
     Called once at application startup via lifespan.
     """
     global _client
-    _client = AsyncQdrantClient(url=settings.QDRANT_URL)
+    _client = AsyncQdrantClient(
+        url=settings.QDRANT_URL,
+        api_key=settings.QDRANT_API_KEY,
+    )
 
     # Create collections if they don't already exist
     await _ensure_collection(settings.QDRANT_COLLECTION_STRATEGIES)
