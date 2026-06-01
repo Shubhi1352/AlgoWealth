@@ -27,7 +27,14 @@ CollectionName = Literal["trading_strategies", "financials"]
 CHUNK_SIZE = 500        # tokens per chunk (approximate)
 CHUNK_OVERLAP = 50      # token overlap between chunks to preserve context
 
-_embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+_embedding_model: SentenceTransformer | None = None
+
+def get_embedding_model() -> SentenceTransformer:
+    global _embedding_model
+    if _embedding_model is None:
+        print("📦 Loading embedding model...")
+        _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _embedding_model
 
 
 async def ingest_pdf(
@@ -154,7 +161,7 @@ async def _embed_chunks(texts: list[str]) -> list[list[float]]:
     Model: all-MiniLM-L6-v2 → 384-dimensional vectors.
     """
     # encode() is synchronous but fast for small batches
-    vectors = _embedding_model.encode(texts, show_progress_bar=False).tolist()
+    vectors = get_embedding_model().encode(texts, show_progress_bar=False).tolist()
     print(f"  🔢 Embedded {len(vectors)} chunks")
     return vectors
 

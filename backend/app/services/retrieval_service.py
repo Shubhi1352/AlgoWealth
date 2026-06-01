@@ -12,8 +12,14 @@ from app.core.config import settings
 from app.db.qdrant import get_qdrant_client
 from sentence_transformers import SentenceTransformer
 
-_embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+_embedding_model: SentenceTransformer | None = None
 
+def get_embedding_model() -> SentenceTransformer:
+    global _embedding_model
+    if _embedding_model is None:
+        print("📦 Loading embedding model...")
+        _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _embedding_model
 
 async def retrieve_chunks(
     query: str,
@@ -35,7 +41,7 @@ async def retrieve_chunks(
     """
     # Embed the query using the same model used during ingestion
     # (vectors must be in the same space to be comparable)
-    query_vector = _embedding_model.encode(query).tolist()
+    query_vector = get_embedding_model().encode(query).tolist()
 
     # Build optional ticker filter
     search_filter = None
