@@ -37,7 +37,7 @@ async def connect_qdrant() -> None:
     global _client
     _client = AsyncQdrantClient(
         url=settings.QDRANT_URL,
-        api_key=settings.QDRANT_API_KEY,
+        #api_key=settings.QDRANT_API_KEY,
     )
 
     # Create collections if they don't already exist

@@ -14,6 +14,7 @@ import {
 import FloatingElement from '@/components/elements/FloatingElement'
 import { Submarine } from '@/components/elements/shapes'
 import styles from './trades.module.css'
+import React from 'react'
 
 type ActionFilter = 'ALL' | 'BUY' | 'SELL'
 type Preset = '1W' | '1M' | '3M' | 'All'
@@ -246,16 +247,15 @@ export default function TradesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(tx => {
+                {filtered.map((tx) => {
                   const isManual   = isManualTrade(tx.agent_reasoning)
                   const isExpanded = expandedId === tx.id
                   const ai         = isManual ? null : tx.agent_reasoning as AIReasoning
 
                   return (
-                    <>
+                    <React.Fragment key={tx.id}>
                       {/* ── Main row ── */}
                       <tr
-                        key={tx.id}
                         className={`${styles.row} ${isExpanded ? styles.rowExpanded : ''}`}
                         onClick={() => toggleExpand(tx.id)}
                       >
@@ -390,7 +390,7 @@ export default function TradesPage() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </React.Fragment>
                   )
                 })}
               </tbody>
