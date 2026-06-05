@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import useSWR from 'swr'
 import { useIsAuthed, useIsReady, useToken } from '@/store/useAuthStore'
 import {
-  authorizedFetcher,
-  fetchWatchlist,
+  useWatchlist,
+  usePositions,
   fetchStockDetail,
   removeFromWatchlist,
   addToWatchlist,
@@ -18,9 +17,9 @@ import {
 } from '@/lib/api'
 import FloatingElement from '@/components/elements/FloatingElement'
 import { Turtle } from '@/components/elements/shapes'
+import MetricCard from '@/components/ui/MetricCard'
+import DataTable, { ColumnDef } from '@/components/ui/DataTable'
 import styles from './watchlist.module.css'
-
-const API = process.env.NEXT_PUBLIC_API_URL
 
 function fmtPrice(n: number) {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -31,49 +30,35 @@ function fmtPct(n: number) {
 }
 
 interface WatchlistRow {
-  entry:    WatchlistEntry
-  detail:   StockDetail | null
+  entry: WatchlistEntry
+  detail: StockDetail | null
   position: Position | null
 }
 
 type ActiveList = 'a' | 'b'
 
 export default function WatchlistABPage() {
-  const router   = useRouter()
+  const router = useRouter()
   const isAuthed = useIsAuthed()
-  const isReady  = useIsReady()
-  const token    = useToken()
+  const isReady = useIsReady()
+  const token = useToken()
 
   // ── all hooks before guard ────────────────────────────────────────────────
   const [activeList, setActiveList] = useState<ActiveList>('a')
-  const [rowsA,      setRowsA]      = useState<WatchlistRow[]>([])
-  const [rowsB,      setRowsB]      = useState<WatchlistRow[]>([])
+  const [rowsA, setRowsA] = useState<WatchlistRow[]>([])
+  const [rowsB, setRowsB] = useState<WatchlistRow[]>([])
   const [enrichingA, setEnrichingA] = useState(false)
   const [enrichingB, setEnrichingB] = useState(false)
-  const [removing,   setRemoving]   = useState<Record<string, boolean>>({})
+  const [removing, setRemoving] = useState<Record<string, boolean>>({})
 
   // add ticker
-  const [addTicker,  setAddTicker]  = useState('')
-  const [addStatus,  setAddStatus]  = useState<'idle'|'loading'|'success'|'error'>('idle')
-  const [addMsg,     setAddMsg]     = useState('')
+  const [addTicker, setAddTicker] = useState('')
+  const [addStatus, setAddStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [addMsg, setAddMsg] = useState('')
 
-  const { data: watchlistA, mutate: mutateA, isLoading: loadingA } = useSWR<WatchlistEntry[]>(
-    token ? ['watchlist-a', token] : null,
-    ([, tok]: [string, string]) => fetchWatchlist('a', tok),
-    { refreshInterval: 60_000 }
-  )
-
-  const { data: watchlistB, mutate: mutateB, isLoading: loadingB } = useSWR<WatchlistEntry[]>(
-    token ? ['watchlist-b', token] : null,
-    ([, tok]: [string, string]) => fetchWatchlist('b', tok),
-    { refreshInterval: 60_000 }
-  )
-
-  const { data: positions, mutate: mutatePositions } = useSWR<Position[]>(
-    token ? [`${API}/api/v1/portfolio/positions`, token] : null,
-    ([url, tok]: [string, string]) => authorizedFetcher<Position[]>(url, tok),
-    { refreshInterval: 30_000 }
-  )
+  const { data: watchlistA, mutate: mutateA, isLoading: loadingA } = useWatchlist('a', { refreshInterval: 60_000 })
+  const { data: watchlistB, mutate: mutateB, isLoading: loadingB } = useWatchlist('b', { refreshInterval: 63_000 })
+  const { data: positions, mutate: mutatePositions } = usePositions({ refreshInterval: 35_000 })
 
   // ── Enrich list A ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -86,7 +71,7 @@ export default function WatchlistABPage() {
       const posMap = Object.fromEntries((positions ?? []).map(p => [p.ticker, p]))
       setRowsA(watchlistA.map((entry, i) => ({
         entry,
-        detail:   details[i],
+        detail: details[i],
         position: posMap[entry.ticker] ?? null,
       })))
       setEnrichingA(false)
@@ -104,7 +89,7 @@ export default function WatchlistABPage() {
       const posMap = Object.fromEntries((positions ?? []).map(p => [p.ticker, p]))
       setRowsB(watchlistB.map((entry, i) => ({
         entry,
-        detail:   details[i],
+        detail: details[i],
         position: posMap[entry.ticker] ?? null,
       })))
       setEnrichingB(false)
@@ -116,18 +101,18 @@ export default function WatchlistABPage() {
   }, [isReady, isAuthed, router])
 
   // ── Active rows + mutate based on toggle ──────────────────────────────────
-  const rows        = activeList === 'a' ? rowsA      : rowsB
-  const mutateList  = activeList === 'a' ? mutateA    : mutateB
-  const setRows     = activeList === 'a' ? setRowsA   : setRowsB
+  const rows = activeList === 'a' ? rowsA : rowsB
+  const mutateList = activeList === 'a' ? mutateA : mutateB
+  const setRows = activeList === 'a' ? setRowsA : setRowsB
   const isEnriching = activeList === 'a' ? enrichingA : enrichingB
-  const isWlLoading = activeList === 'a' ? loadingA   : loadingB
+  const isWlLoading = activeList === 'a' ? loadingA : loadingB
 
   // ── KPIs for active list ──────────────────────────────────────────────────
   const totalInvested = rows.reduce((sum, r) =>
     sum + (r.position ? r.position.avg_buy_price * r.position.quantity : 0), 0)
   const totalValue = rows.reduce((sum, r) =>
     sum + (r.position ? r.position.current_value : 0), 0)
-  const totalPnl    = totalValue - totalInvested
+  const totalPnl = totalValue - totalInvested
   const totalPnlPct = totalInvested > 0 ? (totalPnl / totalInvested) * 100 : 0
 
   // ── Remove — optimistic ───────────────────────────────────────────────────
@@ -171,9 +156,108 @@ export default function WatchlistABPage() {
     }
   }, [addTicker, token, activeList, mutateList])
 
+  const columns = useMemo<ColumnDef<WatchlistRow>[]>(() => [
+    {
+      header: 'Ticker',
+      cell: (row) => {
+        const name = row.detail?.company.name ?? row.entry.ticker
+        const logoUrl = row.detail?.company.logo_url ?? ''
+        return (
+          <Link href={`/stocks/${row.entry.ticker}`} className={styles.tickerCell}>
+            {logoUrl && (
+              <img
+                src={logoUrl}
+                alt=""
+                className={styles.rowLogo}
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+            )}
+            <div>
+              <span className={styles.tickerSymbol}>{row.entry.ticker}</span>
+              <span className={styles.tickerName}>{name}</span>
+            </div>
+          </Link>
+        )
+      }
+    },
+    {
+      header: 'Price',
+      align: 'right',
+      className: styles.numCell,
+      cell: (row) => row.detail ? `$${fmtPrice(row.detail.quote.current_price)}` : <span className="text-muted">—</span>
+    },
+    {
+      header: 'Change',
+      cell: (row) => {
+        if (!row.detail) return <span className="text-muted">—</span>
+        const changePct = row.detail.quote.change_pct
+        const isUp = changePct >= 0
+        return (
+          <span className={`badge ${isUp ? 'badge-profit' : 'badge-loss'}`}>
+            {isUp ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
+          </span>
+        )
+      }
+    },
+    {
+      header: 'Shares',
+      align: 'right',
+      className: styles.numCell,
+      cell: (row) => row.position ? row.position.quantity.toFixed(4) : <span className="text-muted">—</span>
+    },
+    {
+      header: 'Avg Cost',
+      align: 'right',
+      className: styles.numCell,
+      cell: (row) => row.position ? `$${fmtPrice(row.position.avg_buy_price)}` : <span className="text-muted">—</span>
+    },
+    {
+      header: 'Value',
+      align: 'right',
+      className: styles.numCell,
+      cell: (row) => row.position ? `$${fmtPrice(row.position.current_value)}` : <span className="text-muted">—</span>
+    },
+    {
+      header: 'P&L',
+      cell: (row) => {
+        if (!row.position) return <span className="text-muted">—</span>
+        const pnl = row.position.unrealized_pnl
+        const pnlPct = row.position.unrealized_pnl_pct
+        const pnlUp = pnl >= 0
+        return (
+          <div className={styles.pnlCell}>
+            <span className={pnlUp ? 'text-profit' : 'text-loss'}>
+              {pnlUp ? '+' : ''}${fmtPrice(Math.abs(pnl))}
+            </span>
+            <span className={`${styles.pnlPct} ${pnlUp ? 'text-profit' : 'text-loss'}`}>
+              {fmtPct(pnlPct)}
+            </span>
+          </div>
+        )
+      }
+    },
+    {
+      header: '',
+      cell: (row) => {
+        const removeKey = `${activeList}-${row.entry.ticker}`
+        const isRemoving = removing[removeKey] ?? false
+        return (
+          <button
+            className={styles.removeBtn}
+            onClick={() => handleRemove(row.entry.ticker)}
+            disabled={isRemoving}
+            aria-label={`Remove ${row.entry.ticker}`}
+          >
+            {isRemoving ? '…' : '✕'}
+          </button>
+        )
+      }
+    }
+  ], [activeList, removing, handleRemove])
+
   if (!isReady || !isAuthed) return null
 
-  const isLoading = isWlLoading || isEnriching
+  const isLoading = (isWlLoading && rows.length === 0) || (isEnriching && rows.length === 0)
 
   return (
     <>
@@ -246,159 +330,55 @@ export default function WatchlistABPage() {
 
         {/* ── KPI strip ── */}
         <div className={styles.kpiStrip}>
-          {[
-            { label: `List ${activeList.toUpperCase()} Stocks`, value: rows.length.toString(),   sub: 'watching' },
-            { label: 'Total Invested',  value: `$${fmtPrice(totalInvested)}`, sub: 'in positions' },
-            { label: 'Current Value',   value: `$${fmtPrice(totalValue)}`,    sub: 'mark to market' },
-            {
-              label: 'Unrealized P&L',
-              value: `${totalPnl >= 0 ? '+' : ''}$${fmtPrice(Math.abs(totalPnl))}`,
-              sub: fmtPct(totalPnlPct),
-              pnl: totalPnl,
-            },
-          ].map(k => (
-            <div key={k.label} className={`${styles.kpiCard} glass`}>
-              <span className={styles.kpiLabel}>{k.label}</span>
-              <span className={`${styles.kpiValue} ${'pnl' in k ? (k.pnl! >= 0 ? 'text-profit' : 'text-loss') : ''}`}>
-                {k.value}
-              </span>
-              <span className={styles.kpiSub}>{k.sub}</span>
-            </div>
-          ))}
+          <MetricCard
+            label={`List ${activeList.toUpperCase()} Stocks`}
+            value={rows.length.toString()}
+            sub="watching"
+            loading={isLoading}
+          />
+          <MetricCard
+            label="Total Invested"
+            value={`$${fmtPrice(totalInvested)}`}
+            sub="in positions"
+            loading={isLoading}
+          />
+          <MetricCard
+            label="Current Value"
+            value={`$${fmtPrice(totalValue)}`}
+            sub="mark to market"
+            loading={isLoading}
+          />
+          <MetricCard
+            label="Unrealized P&L"
+            value={`${totalPnl >= 0 ? '+' : ''}$${fmtPrice(Math.abs(totalPnl))}`}
+            sub={fmtPct(totalPnlPct)}
+            trend={totalPnl >= 0 ? 'up' : 'down'}
+            loading={isLoading}
+          />
         </div>
 
         {/* ── Table ── */}
         <div className={`${styles.tableWrap} glass`}>
-          {isLoading ? (
-            <div className={styles.loadingRows}>
-              {[1,2,3].map(i => (
-                <div key={i} className="skeleton" style={{ height: 56, borderRadius: 8 }} />
-              ))}
-            </div>
-          ) : rows.length === 0 ? (
-            <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>⭐</span>
-              <p className={styles.emptyTitle}>List {activeList.toUpperCase()} is empty</p>
-              <p className={styles.emptySub}>
-                Add a ticker above or visit a{' '}
-                <Link href="/stocks" className={styles.emptyLink}>stock page</Link>
-                {' '}to add it here.
-              </p>
-            </div>
-          ) : (
-            <table className={`aw-table ${styles.table}`}>
-              <thead>
-                <tr>
-                  <th>Ticker</th>
-                  <th>Price</th>
-                  <th>Change</th>
-                  <th>Shares</th>
-                  <th>Avg Cost</th>
-                  <th>Value</th>
-                  <th>P&amp;L</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(({ entry, detail, position }) => {
-                  const price     = detail?.quote.current_price ?? 0
-                  const changePct = detail?.quote.change_pct    ?? 0
-                  const name      = detail?.company.name        ?? entry.ticker
-                  const logoUrl   = detail?.company.logo_url    ?? ''
-                  const isUp      = changePct >= 0
-                  const hasPos    = !!position
-                  const pnl       = position?.unrealized_pnl     ?? 0
-                  const pnlPct    = position?.unrealized_pnl_pct ?? 0
-                  const removeKey = `${activeList}-${entry.ticker}`
-
-                  return (
-                    <tr key={entry.ticker} className={styles.row}>
-
-                      {/* Ticker */}
-                      <td>
-                        <Link href={`/stocks/${entry.ticker}`} className={styles.tickerCell}>
-                          {logoUrl && (
-                            <img
-                              src={logoUrl}
-                              alt=""
-                              className={styles.rowLogo}
-                              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                            />
-                          )}
-                          <div>
-                            <span className={styles.tickerSymbol}>{entry.ticker}</span>
-                            <span className={styles.tickerName}>{name}</span>
-                          </div>
-                        </Link>
-                      </td>
-
-                      {/* Price */}
-                      <td className={styles.numCell}>
-                        {detail ? `$${fmtPrice(price)}` : <span className="text-muted">—</span>}
-                      </td>
-
-                      {/* Change */}
-                      <td>
-                        {detail ? (
-                          <span className={`badge ${isUp ? 'badge-profit' : 'badge-loss'}`}>
-                            {isUp ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
-                          </span>
-                        ) : <span className="text-muted">—</span>}
-                      </td>
-
-                      {/* Shares */}
-                      <td className={styles.numCell}>
-                        {hasPos
-                          ? position.quantity.toFixed(4)
-                          : <span className="text-muted">—</span>}
-                      </td>
-
-                      {/* Avg cost */}
-                      <td className={styles.numCell}>
-                        {hasPos
-                          ? `$${fmtPrice(position.avg_buy_price)}`
-                          : <span className="text-muted">—</span>}
-                      </td>
-
-                      {/* Current value */}
-                      <td className={styles.numCell}>
-                        {hasPos
-                          ? `$${fmtPrice(position.current_value)}`
-                          : <span className="text-muted">—</span>}
-                      </td>
-
-                      {/* P&L */}
-                      <td>
-                        {hasPos ? (
-                          <div className={styles.pnlCell}>
-                            <span className={pnl >= 0 ? 'text-profit' : 'text-loss'}>
-                              {pnl >= 0 ? '+' : ''}${fmtPrice(Math.abs(pnl))}
-                            </span>
-                            <span className={`${styles.pnlPct} ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
-                              {fmtPct(pnlPct)}
-                            </span>
-                          </div>
-                        ) : <span className="text-muted">—</span>}
-                      </td>
-
-                      {/* Remove */}
-                      <td>
-                        <button
-                          className={styles.removeBtn}
-                          onClick={() => handleRemove(entry.ticker)}
-                          disabled={removing[removeKey] ?? false}
-                          aria-label={`Remove ${entry.ticker}`}
-                        >
-                          {removing[removeKey] ? '…' : '✕'}
-                        </button>
-                      </td>
-
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
+          <DataTable
+            columns={columns}
+            data={rows}
+            isLoading={isLoading}
+            emptyState={{
+              icon: '⭐',
+              title: `List ${activeList.toUpperCase()} is empty`,
+              subtitle: (
+                <>
+                  Add a ticker above or visit a{' '}
+                  <Link href="/stocks" className={styles.emptyLink}>stock page</Link>
+                  {' '}to add it here.
+                </>
+              ),
+            }}
+            rowKey={(r) => r.entry.ticker}
+            tableClassName={styles.table}
+            rowClassName={() => styles.row}
+            loadingRowsCount={3}
+          />
         </div>
 
       </div>

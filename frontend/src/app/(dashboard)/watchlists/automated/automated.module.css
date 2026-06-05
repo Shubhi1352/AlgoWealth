@@ -5,14 +5,24 @@
   gap: 20px;
   height: 100%;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: hidden;
   padding: 24px 28px 40px;
   box-sizing: border-box;
 }
-.page::-webkit-scrollbar { width: 4px; }
-.page::-webkit-scrollbar-track { background: transparent; }
-.page::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+.page::-webkit-scrollbar {
+  width: 4px;
+}
+
+.page::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.page::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+}
 
 /* ─── Title row ──────────────────────────────────────────────────────────── */
 .titleRow {
@@ -99,15 +109,24 @@
 
 /* ─── Table wrap ─────────────────────────────────────────────────────────── */
 .tableWrap {
-  border-radius: 14px;
   padding: 0;
-  overflow: hidden;
+  overflow-y: auto;
   flex: 1;
   min-height: 0;
 }
 
 .table {
   width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  background: #092e4a;
+  z-index: 10;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .loadingRows {
@@ -128,7 +147,9 @@
   text-align: center;
 }
 
-.emptyIcon  { font-size: 2.4rem; }
+.emptyIcon {
+  font-size: 2.4rem;
+}
 
 .emptyTitle {
   font-size: 1rem;
@@ -147,11 +168,19 @@
   color: var(--color-accent);
   text-decoration: none;
 }
-.emptyLink:hover { text-decoration: underline; }
+
+.emptyLink:hover {
+  text-decoration: underline;
+}
 
 /* ─── Table rows ─────────────────────────────────────────────────────────── */
-.row { transition: background 0.12s; }
-.row:hover { background: rgba(255,255,255,0.03); }
+.row {
+  transition: background 0.12s;
+}
+
+.row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
 
 .tickerCell {
   display: flex;
@@ -160,14 +189,17 @@
   text-decoration: none;
   color: inherit;
 }
-.tickerCell:hover .tickerSymbol { color: var(--color-accent); }
+
+.tickerCell:hover .tickerSymbol {
+  color: var(--color-accent);
+}
 
 .rowLogo {
   width: 28px;
   height: 28px;
   border-radius: 6px;
   object-fit: contain;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   padding: 2px;
   flex-shrink: 0;
 }
@@ -209,9 +241,9 @@
 
 /* ─── Stop loss inline edit ──────────────────────────────────────────────── */
 .slBadge {
-  background: rgba(255,213,128,0.12);
+  background: rgba(255, 213, 128, 0.12);
   color: var(--color-warning);
-  border: 1px solid rgba(255,213,128,0.25);
+  border: 1px solid rgba(255, 213, 128, 0.25);
   border-radius: 20px;
   padding: 3px 10px;
   font-size: 0.75rem;
@@ -220,7 +252,10 @@
   transition: background 0.15s;
   white-space: nowrap;
 }
-.slBadge:hover { background: rgba(255,213,128,0.22); }
+
+.slBadge:hover {
+  background: rgba(255, 213, 128, 0.22);
+}
 
 .slEditRow {
   display: flex;
@@ -236,8 +271,13 @@
 
 /* hide number spinners */
 .slEditInput::-webkit-outer-spin-button,
-.slEditInput::-webkit-inner-spin-button { -webkit-appearance: none; }
-.slEditInput[type=number] { -moz-appearance: textfield; }
+.slEditInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.slEditInput[type=number] {
+  -moz-appearance: textfield;
+}
 
 .slPctSymbol {
   font-size: 0.78rem;
@@ -245,9 +285,9 @@
 }
 
 .slSaveBtn {
-  background: rgba(127,255,212,0.15);
+  background: rgba(127, 255, 212, 0.15);
   color: var(--color-accent);
-  border: 1px solid rgba(127,255,212,0.3);
+  border: 1px solid rgba(127, 255, 212, 0.3);
   border-radius: 6px;
   width: 26px;
   height: 26px;
@@ -258,8 +298,15 @@
   justify-content: center;
   transition: background 0.12s;
 }
-.slSaveBtn:hover:not(:disabled) { background: rgba(127,255,212,0.28); }
-.slSaveBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.slSaveBtn:hover:not(:disabled) {
+  background: rgba(127, 255, 212, 0.28);
+}
+
+.slSaveBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 .slCancelBtn {
   background: transparent;
@@ -275,7 +322,11 @@
   justify-content: center;
   transition: color 0.12s;
 }
-.slCancelBtn:hover { color: var(--color-loss); border-color: var(--color-loss); }
+
+.slCancelBtn:hover {
+  color: var(--color-loss);
+  border-color: var(--color-loss);
+}
 
 /* ─── Remove button ──────────────────────────────────────────────────────── */
 .removeBtn {
@@ -292,12 +343,17 @@
   justify-content: center;
   transition: all 0.12s;
 }
+
 .removeBtn:hover:not(:disabled) {
   color: var(--color-loss);
-  border-color: rgba(255,107,138,0.35);
-  background: rgba(255,107,138,0.08);
+  border-color: rgba(255, 107, 138, 0.35);
+  background: rgba(255, 107, 138, 0.08);
 }
-.removeBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.removeBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 .slPrice {
   display: block;

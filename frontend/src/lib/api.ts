@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/store/useAuthStore'
+import useSWR, { SWRConfiguration } from 'swr'
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
@@ -134,9 +135,14 @@ export interface AgentSignalBase {
   summary: string
 }
 
+export interface NewsArticle {
+  title: string
+  url: string
+}
+
 export interface NewsSignal extends AgentSignalBase {
   sentiment: number
-  articles:  { title: string; url: string }[]
+  articles: NewsArticle[]
 }
 
 export interface AIReasoning {
@@ -275,18 +281,6 @@ export interface TradeResult {
   message: string
 }
 
-export interface NewsArticle {
-  title: string
-  url: string
-}
-
-export interface NewsSignal {
-  signal: 'BUY' | 'SELL' | 'HOLD'
-  sentiment: number
-  summary: string
-  articles: NewsArticle[]
-}
-
 export interface RagSource {
   text: string
   source: string
@@ -296,14 +290,10 @@ export interface RagSource {
 }
 
 export interface FundamentalSignal extends AgentSignalBase {
-  signal: 'BUY' | 'SELL' | 'HOLD'
-  summary: string
   sources: RagSource[]
 }
 
-export interface TechnicalSignal extends AgentSignalBase{
-  signal: 'BUY' | 'SELL' | 'HOLD'
-  summary: string
+export interface TechnicalSignal extends AgentSignalBase {
   sources: RagSource[]
 }
 
@@ -591,4 +581,51 @@ export async function updatePreferences(
     body: JSON.stringify({ risk_appetite: riskAppetite }),
   })
   if (!res.ok) throw new Error('Failed to update preferences')
+}
+
+// ── Custom SWR Hooks ─────────────────────────────────────────────────────────
+
+export function usePositions(config?: SWRConfiguration) {
+  const token = useAuthStore(s => s.token)
+  return useSWR<Position[]>(
+    token ? ['/api/v1/portfolio/positions', token] : null,
+    ([, tok]) => fetchPositions(tok as string),
+    config
+  )
+}
+
+export function useTransactions(config?: SWRConfiguration) {
+  const token = useAuthStore(s => s.token)
+  return useSWR<Transaction[]>(
+    token ? ['/api/v1/portfolio/transactions', token] : null,
+    ([, tok]) => fetchTransactions(tok as string),
+    config
+  )
+}
+
+export function useWatchlist(list: WatchlistType, config?: SWRConfiguration) {
+  const token = useAuthStore(s => s.token)
+  return useSWR<WatchlistEntry[]>(
+    token ? [`/api/v1/watchlists/watchlists/${list}`, token] : null,
+    ([, tok]) => fetchWatchlist(list, tok as string),
+    config
+  )
+}
+
+export function usePortfolioSummary(config?: SWRConfiguration) {
+  const token = useAuthStore(s => s.token)
+  return useSWR<PortfolioSummary>(
+    token ? ['/api/v1/portfolio/', token] : null,
+    ([, tok]) => authorizedFetcher<PortfolioSummary>(`${BASE_URL}/api/v1/portfolio/`, tok as string),
+    config
+  )
+}
+
+export function usePortfolioHistory(config?: SWRConfiguration) {
+  const token = useAuthStore(s => s.token)
+  return useSWR<PortfolioHistory>(
+    token ? ['/api/v1/portfolio/history', token] : null,
+    ([, tok]) => authorizedFetcher<PortfolioHistory>(`${BASE_URL}/api/v1/portfolio/history`, tok as string),
+    config
+  )
 }
