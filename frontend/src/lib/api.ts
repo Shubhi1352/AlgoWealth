@@ -7,7 +7,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 // ── Error type ────────────────────────────────────────────────────────────────
 export class ApiError extends Error {
   constructor(
-    public status:  number,
+    public status: number,
     public message: string,
     public detail?: unknown
   ) {
@@ -19,21 +19,22 @@ export class ApiError extends Error {
 // ── Response types ────────────────────────────────────────────────────────────
 export interface AuthResponse {
   access_token: string
-  token_type:   string
+  token_type: string
 }
 
 export interface UserResponse {
-  id:              string
-  email:           string
+  id: string
+  email: string
   virtual_balance: number
-  created_at:      string
+  created_at: string
+  risk_appetite: 'Conservative' | 'Moderate' | 'Aggressive'
 }
 
 // ── Core fetch wrapper ────────────────────────────────────────────────────────
 async function request<T>(
-  path:    string,
+  path: string,
   options: RequestInit = {},
-  auth     = false,        // whether to attach JWT
+  auth = false,        // whether to attach JWT
 ): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -73,12 +74,12 @@ async function request<T>(
  * Creates a new account and returns a JWT.
  */
 export async function registerUser(
-  email:    string,
+  email: string,
   password: string
 ): Promise<AuthResponse> {
   return request<AuthResponse>('/api/v1/auth/register', {
     method: 'POST',
-    body:   JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password }),
   })
 }
 
@@ -87,12 +88,12 @@ export async function registerUser(
  * Authenticates and returns a JWT.
  */
 export async function loginUser(
-  email:    string,
+  email: string,
   password: string
 ): Promise<AuthResponse> {
   return request<AuthResponse>('/api/v1/auth/login', {
     method: 'POST',
-    body:   JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password }),
   })
 }
 
@@ -131,7 +132,7 @@ export interface PortfolioSummary {
 // ── Agent reasoning shapes ────────────────────────────────────────────────────
 
 export interface AgentSignalBase {
-  signal:  'BUY' | 'SELL' | 'HOLD'
+  signal: 'BUY' | 'SELL' | 'HOLD'
   summary: string
 }
 
@@ -146,17 +147,17 @@ export interface NewsSignal extends AgentSignalBase {
 }
 
 export interface AIReasoning {
-  decision:           string
-  confidence:         number
-  reasoning:          string
-  news_signal:        NewsSignal
-  technical_signal:   TechnicalSignal
+  decision: string
+  confidence: number
+  reasoning: string
+  news_signal: NewsSignal
+  technical_signal: TechnicalSignal
   fundamental_signal: FundamentalSignal
 }
 
 export interface ManualReasoning {
   manual: true
-  note:   string
+  note: string
 }
 
 export type AgentReasoning = AIReasoning | ManualReasoning
@@ -180,11 +181,7 @@ export interface Transaction {
 }
 
 export async function fetchTransactions(token: string): Promise<Transaction[]> {
-  const res = await fetch(`${BASE_URL}/api/v1/portfolio/transactions`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) throw new Error('Failed to fetch transactions')
-  return res.json()
+  return authorizedFetcher<Transaction[]>(`${BASE_URL}/api/v1/portfolio/transactions`, token)
 }
 
 export interface RecommendedStock {
@@ -226,29 +223,29 @@ export interface PortfolioHistory {
 // ─── Stock Detail ────────────────────────────────────────────────────────────
 
 export interface StockQuote {
-  ticker:      string
+  ticker: string
   current_price: number
-  open:        number
-  high:        number
-  low:         number
-  prev_close:  number
-  change:      number
-  change_pct:  number
-  cached:      boolean
+  open: number
+  high: number
+  low: number
+  prev_close: number
+  change: number
+  change_pct: number
+  cached: boolean
 }
 
 export interface CompanyProfile {
-  ticker:     string
-  name:       string
-  sector:     string
+  ticker: string
+  name: string
+  sector: string
   market_cap: number        // in millions USD
-  logo_url:   string
-  exchange:   string
-  ipo_date:   string
+  logo_url: string
+  exchange: string
+  ipo_date: string
 }
 
 export interface StockDetail {
-  quote:   StockQuote
+  quote: StockQuote
   company: CompanyProfile
 }
 
@@ -265,10 +262,10 @@ export interface Position {
 }
 
 export interface TradeRequest {
-  ticker:     string
-  action:     'BUY' | 'SELL'
+  ticker: string
+  action: 'BUY' | 'SELL'
   confidence: number
-  quantity:   number
+  quantity: number
   trade_type: 'manual' | 'automated'
 }
 
@@ -319,11 +316,7 @@ export interface CandlePoint {
 // ─── Stock Detail API Functions ────────────────────────────────────────────
 
 export async function fetchPositions(token: string): Promise<Position[]> {
-  const res = await fetch(`${BASE_URL}/api/v1/portfolio/positions`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) throw new Error('Failed to fetch positions')
-  return res.json()
+  return authorizedFetcher<Position[]>(`${BASE_URL}/api/v1/portfolio/positions`, token)
 }
 
 export async function fetchChart(
@@ -389,16 +382,16 @@ export async function analyzeStock(
     throw new Error(err.detail ?? 'Analysis failed')
   }
   return res.json()
-}  
+}
 
 // ── Watchlist types ───────────────────────────────────────────────────────────
 
 export interface WatchlistEntry {
-  ticker:          string
-  stop_loss_pct:   number
+  ticker: string
+  stop_loss_pct: number
   stop_loss_price: number | null
-  active:          boolean
-  added_at?:       string
+  active: boolean
+  added_at?: string
 }
 
 export type WatchlistType = 'automated' | 'a' | 'b'
@@ -414,7 +407,7 @@ export async function fetchWatchlist(
   })
   if (!res.ok) throw new Error('Failed to fetch watchlist')
   const data = await res.json()
-  if (Array.isArray(data))       return data
+  if (Array.isArray(data)) return data
   if (Array.isArray(data.items)) return data.items
   return data.watchlist ?? []
 }
@@ -430,9 +423,9 @@ export async function addToWatchlist(
     : { ticker }
 
   const res = await fetch(`${BASE_URL}/api/v1/watchlists/watchlists/${list}`, {
-    method:  'POST',
+    method: 'POST',
     headers: {
-      'Content-Type':  'application/json',
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify(body),
@@ -448,7 +441,7 @@ export async function removeFromWatchlist(
   const res = await fetch(
     `${BASE_URL}/api/v1/watchlists/watchlists/${list}/${ticker}`,
     {
-      method:  'DELETE',
+      method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     }
   )
@@ -474,9 +467,9 @@ export async function updateStopLoss(
   const res = await fetch(
     `${BASE_URL}/api/v1/watchlists/watchlists/automated/${ticker}/stop-loss`,
     {
-      method:  'PATCH',
+      method: 'PATCH',
       headers: {
-        'Content-Type':  'application/json',
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ stop_loss_pct: stopLossPct }),
@@ -489,7 +482,7 @@ export async function updateStopLoss(
 
 export async function resetPortfolio(token: string): Promise<{ message: string; cash_balance: number }> {
   const res = await fetch(`${BASE_URL}/api/v1/portfolio/reset`, {
-    method:  'POST',
+    method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) {
@@ -503,27 +496,27 @@ export async function resetPortfolio(token: string): Promise<{ message: string; 
 // ── Ingest / Knowledge Base ───────────────────────────────────────────────
 
 export interface IngestDocument {
-  id:            string
-  filename:      string
-  collection:    'trading_strategies' | 'financials'
-  chunks_count:  number
+  id: string
+  filename: string
+  collection: 'trading_strategies' | 'financials'
+  chunks_count: number
   document_type: string
-  ingested_at:   string
-  ticker:        string | null
-  supersedes:    string | null
+  ingested_at: string
+  ticker: string | null
+  supersedes: string | null
 }
 
 export interface IngestListResponse {
   documents: IngestDocument[]
-  count:     number
+  count: number
 }
 
 export interface IngestUploadResponse {
-  message:         string
-  filename:        string
-  collection:      string
+  message: string
+  filename: string
+  collection: string
   chunks_ingested: number
-  ticker:          string | null
+  ticker: string | null
 }
 
 export async function fetchDocuments(token: string): Promise<IngestListResponse> {
@@ -536,30 +529,30 @@ export async function fetchDocuments(token: string): Promise<IngestListResponse>
 
 export async function deleteDocument(docId: string, token: string): Promise<void> {
   const res = await fetch(`${BASE_URL}/api/v1/ingest/documents/${docId}`, {
-    method:  'DELETE',
+    method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) throw new Error('Failed to delete document')
 }
 
 export async function uploadDocument(
-  file:           File,
-  collection:     'trading_strategies' | 'financials',
-  token:          string,
-  ticker?:        string,
-  documentType?:  string,
+  file: File,
+  collection: 'trading_strategies' | 'financials',
+  token: string,
+  ticker?: string,
+  documentType?: string,
 ): Promise<IngestUploadResponse> {
   const params = new URLSearchParams({ collection })
-  if (ticker)       params.set('ticker', ticker.toUpperCase())
+  if (ticker) params.set('ticker', ticker.toUpperCase())
   if (documentType) params.set('document_type', documentType)
 
   const form = new FormData()
   form.append('file', file)
 
   const res = await fetch(`${BASE_URL}/api/v1/ingest/document?${params}`, {
-    method:  'POST',
+    method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
-    body:    form,
+    body: form,
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
@@ -573,9 +566,9 @@ export async function updatePreferences(
   token: string
 ): Promise<void> {
   const res = await fetch(`${BASE_URL}/api/v1/portfolio/preferences`, {
-    method:  'PATCH',
+    method: 'PATCH',
     headers: {
-      'Content-Type':  'application/json',
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify({ risk_appetite: riskAppetite }),
@@ -585,12 +578,17 @@ export async function updatePreferences(
 
 // ── Custom SWR Hooks ─────────────────────────────────────────────────────────
 
+const SWR_DEFAULTS: SWRConfiguration = {
+  revalidateOnFocus: false,
+  keepPreviousData: true,
+}
+
 export function usePositions(config?: SWRConfiguration) {
   const token = useAuthStore(s => s.token)
   return useSWR<Position[]>(
     token ? ['/api/v1/portfolio/positions', token] : null,
     ([, tok]) => fetchPositions(tok as string),
-    config
+    { ...SWR_DEFAULTS, ...config }
   )
 }
 
@@ -599,7 +597,7 @@ export function useTransactions(config?: SWRConfiguration) {
   return useSWR<Transaction[]>(
     token ? ['/api/v1/portfolio/transactions', token] : null,
     ([, tok]) => fetchTransactions(tok as string),
-    config
+    { ...SWR_DEFAULTS, ...config }
   )
 }
 
@@ -608,7 +606,7 @@ export function useWatchlist(list: WatchlistType, config?: SWRConfiguration) {
   return useSWR<WatchlistEntry[]>(
     token ? [`/api/v1/watchlists/watchlists/${list}`, token] : null,
     ([, tok]) => fetchWatchlist(list, tok as string),
-    config
+    { ...SWR_DEFAULTS, ...config }
   )
 }
 
@@ -617,7 +615,7 @@ export function usePortfolioSummary(config?: SWRConfiguration) {
   return useSWR<PortfolioSummary>(
     token ? ['/api/v1/portfolio/', token] : null,
     ([, tok]) => authorizedFetcher<PortfolioSummary>(`${BASE_URL}/api/v1/portfolio/`, tok as string),
-    config
+    { ...SWR_DEFAULTS, ...config }
   )
 }
 
@@ -626,6 +624,6 @@ export function usePortfolioHistory(config?: SWRConfiguration) {
   return useSWR<PortfolioHistory>(
     token ? ['/api/v1/portfolio/history', token] : null,
     ([, tok]) => authorizedFetcher<PortfolioHistory>(`${BASE_URL}/api/v1/portfolio/history`, tok as string),
-    config
+    { ...SWR_DEFAULTS, ...config }
   )
 }

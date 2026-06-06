@@ -32,14 +32,14 @@ const API = process.env.NEXT_PUBLIC_API_URL
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const RISK_OPTIONS = ['Conservative', 'Moderate', 'Aggressive'] as const
-type RiskAppetite  = typeof RISK_OPTIONS[number]
-type Collection    = 'trading_strategies' | 'financials'
+type RiskAppetite = typeof RISK_OPTIONS[number]
+type Collection = 'trading_strategies' | 'financials'
 
 const PREFS_KEY = 'algowealth-prefs'
 
 interface UserPrefs {
   defaultStopLoss: number
-  riskAppetite:    RiskAppetite
+  riskAppetite: RiskAppetite
 }
 
 const DEFAULT_PREFS: UserPrefs = { defaultStopLoss: 5, riskAppetite: 'Moderate' }
@@ -67,36 +67,36 @@ function savePrefs(prefs: UserPrefs): void {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function ProfilePage() {
-  const router   = useRouter()
+  const router = useRouter()
   const isAuthed = useIsAuthed()
-  const isReady  = useIsReady()
-  const token    = useToken()
-  const user     = useUser()
-  const logout   = useAuthStore(s => s.logout)
+  const isReady = useIsReady()
+  const token = useToken()
+  const user = useUser()
+  const logout = useAuthStore(s => s.logout)
 
   // ── Preferences ────────────────────────────────────────────────────────────
-  const [prefs,         setPrefs]         = useState<UserPrefs>(DEFAULT_PREFS)
+  const [prefs, setPrefs] = useState<UserPrefs>(DEFAULT_PREFS)
   const [stopLossInput, setStopLossInput] = useState('5')
-  const [prefsSaved,    setPrefsSaved]    = useState(false)
+  const [prefsSaved, setPrefsSaved] = useState(false)
 
   // ── Reset modal ─────────────────────────────────────────────────────────────
   const [showResetModal, setShowResetModal] = useState(false)
-  const [resetting,      setResetting]      = useState(false)
-  const [resetError,     setResetError]     = useState<string | null>(null)
+  const [resetting, setResetting] = useState(false)
+  const [resetError, setResetError] = useState<string | null>(null)
 
   // ── Upload form ─────────────────────────────────────────────────────────────
   const [uploadCollection, setUploadCollection] = useState<Collection>('trading_strategies')
-  const [uploadTicker,     setUploadTicker]      = useState('')
-  const [uploadDocType,    setUploadDocType]      = useState('')
-  const [uploadFile,       setUploadFile]         = useState<File | null>(null)
-  const [uploading,        setUploading]          = useState(false)
-  const [uploadError,      setUploadError]        = useState<string | null>(null)
-  const [uploadSuccess,    setUploadSuccess]      = useState<string | null>(null)
+  const [uploadTicker, setUploadTicker] = useState('')
+  const [uploadDocType, setUploadDocType] = useState('')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // ── Doc list filters ────────────────────────────────────────────────────────
   const [docCollectionFilter, setDocCollectionFilter] = useState<'all' | Collection>('all')
-  const [docTickerFilter,     setDocTickerFilter]      = useState('')
+  const [docTickerFilter, setDocTickerFilter] = useState('')
 
   // ── Deleting ────────────────────────────────────────────────────────────────
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -133,36 +133,36 @@ export default function ProfilePage() {
     setStopLossInput(String(p.defaultStopLoss))
   }, [user])   // re-run when user object updates from getMe()
 
-  // Refresh user object from /auth/me on mount
+  // Refresh user object from /portfolio/me on mount
   useEffect(() => {
     if (!token) return
-    getMe().then(u => useAuthStore.getState().setUser(u)).catch(() => {})
+    getMe().then(u => useAuthStore.getState().setUser(u)).catch(() => { })
   }, [token])
 
   // ── Stats ───────────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
     if (!transactions?.length) return null
-    const sells   = transactions.filter(t => t.action === 'SELL')
-  const byValue = [...sells].sort((a, b) => b.total_value - a.total_value)
+    const sells = transactions.filter(t => t.action === 'SELL')
+    const byValue = [...sells].sort((a, b) => b.total_value - a.total_value)
 
-  const totalAI = transactions.filter(t => t.confidence_score > 0).length
-  const avgConf = totalAI
-    ? transactions
+    const totalAI = transactions.filter(t => t.confidence_score > 0).length
+    const avgConf = totalAI
+      ? transactions
         .filter(t => t.confidence_score > 0)
         .reduce((s, t) => s + t.confidence_score, 0) / totalAI
-    : 0
+      : 0
 
-  const aiSells = sells.filter(t => t.confidence_score > 0)
-  const wins    = aiSells.filter(t => t.confidence_score >= 0.6)
-  const winRate = aiSells.length ? (wins.length / aiSells.length) * 100 : 0
+    const aiSells = sells.filter(t => t.confidence_score > 0)
+    const wins = aiSells.filter(t => t.confidence_score >= 0.6)
+    const winRate = aiSells.length ? (wins.length / aiSells.length) * 100 : 0
 
-  return {
-    winRate,
-    bestTrade:  byValue[0] ?? null,
-    worstTrade: byValue[byValue.length - 1] ?? null,
-    avgConf,
-  }
-}, [transactions])
+    return {
+      winRate,
+      bestTrade: byValue[0] ?? null,
+      worstTrade: byValue[byValue.length - 1] ?? null,
+      avgConf,
+    }
+  }, [transactions])
 
   // ── Filtered docs ────────────────────────────────────────────────────────────
   const filteredDocs = useMemo(() => {
@@ -186,17 +186,17 @@ export default function ProfilePage() {
   }, [prefs, stopLossInput])
 
   const handleRiskChange = useCallback(async (risk: RiskAppetite) => {
-  const next: UserPrefs = { ...prefs, riskAppetite: risk }
-  setPrefs(next)
-  savePrefs(next)   // optimistic local update
-  if (token) {
-    try {
-      await updatePreferences(risk, token)
-    } catch {
-      // silent — preference is saved locally, backend sync failed
+    const next: UserPrefs = { ...prefs, riskAppetite: risk }
+    setPrefs(next)
+    savePrefs(next)   // optimistic local update
+    if (token) {
+      try {
+        await updatePreferences(risk, token)
+      } catch {
+        // silent — preference is saved locally, backend sync failed
+      }
     }
-  }
-}, [prefs, token])
+  }, [prefs, token])
 
   // ── Reset handler ───────────────────────────────────────────────────────────
   const handleReset = useCallback(async () => {
@@ -307,10 +307,10 @@ export default function ProfilePage() {
               </div>
               <div className={styles.infoRows}>
                 {([
-                  { label: 'Email',            value: user?.email ?? '—',                         cls: '' },
-                  { label: 'Member since',      value: joinedDate,                                 cls: '' },
-                  { label: 'Starting balance',  value: '$100,000.00',                              cls: '' },
-                  { label: 'Cash available',    value: `$${fmtPrice(summary?.cash_balance ?? 0)}`, cls: 'text-accent' },
+                  { label: 'Email', value: user?.email ?? '—', cls: '' },
+                  { label: 'Member since', value: joinedDate, cls: '' },
+                  { label: 'Starting balance', value: '$100,000.00', cls: '' },
+                  { label: 'Cash available', value: `$${fmtPrice(summary?.cash_balance ?? 0)}`, cls: 'text-accent' },
                   {
                     label: 'Total P&L',
                     value: `${totalPnlUp ? '+' : ''}$${fmtPrice(Math.abs(summary?.total_pnl ?? 0))} (${totalPnlUp ? '+' : ''}${(summary?.total_pnl_pct ?? 0).toFixed(2)}%)`,
@@ -348,13 +348,13 @@ export default function ProfilePage() {
                 </div>
                 <p className={styles.prefHint}>
                   {prefs.riskAppetite === 'Conservative' && 'Prefers HOLD signals. Position sizing stays minimal.'}
-                  {prefs.riskAppetite === 'Moderate'     && 'Balanced approach. Standard confidence thresholds apply.'}
-                  {prefs.riskAppetite === 'Aggressive'   && 'Accepts lower confidence signals. Higher position sizing.'}
+                  {prefs.riskAppetite === 'Moderate' && 'Balanced approach. Standard confidence thresholds apply.'}
+                  {prefs.riskAppetite === 'Aggressive' && 'Accepts lower confidence signals. Higher position sizing.'}
                 </p>
               </div>
             </div>
 
-            
+
           </div>
 
           {/* RIGHT */}
@@ -368,7 +368,7 @@ export default function ProfilePage() {
               </div>
               {txLoading ? (
                 <div className={styles.statsLoading}>
-                  {[1,2,3,4].map(i => <div key={i} className="skeleton" style={{ height: 52, borderRadius: 8 }} />)}
+                  {[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: 52, borderRadius: 8 }} />)}
                 </div>
               ) : !stats ? (
                 <div className={styles.statsEmpty}>
@@ -378,10 +378,10 @@ export default function ProfilePage() {
               ) : (
                 <div className={styles.statsGrid}>
                   {([
-                    { label: 'Win Rate',         value: `${stats.winRate.toFixed(0)}%`,           sub: 'of AI sell trades',  cls: stats.winRate >= 50 ? 'text-profit' : 'text-loss' },
-                    { label: 'Total Trades',      value: String(summary?.total_trades ?? 0),        sub: 'all time',           cls: '' },
-                    { label: 'Avg AI Confidence', value: `${(stats.avgConf * 100).toFixed(0)}%`,   sub: 'across AI trades',   cls: '' },
-                    { label: 'Open Positions',    value: String(summary?.total_positions ?? 0),     sub: 'active holdings',    cls: '' },
+                    { label: 'Win Rate', value: `${stats.winRate.toFixed(0)}%`, sub: 'of AI sell trades', cls: stats.winRate >= 50 ? 'text-profit' : 'text-loss' },
+                    { label: 'Total Trades', value: String(summary?.total_trades ?? 0), sub: 'all time', cls: '' },
+                    { label: 'Avg AI Confidence', value: `${(stats.avgConf * 100).toFixed(0)}%`, sub: 'across AI trades', cls: '' },
+                    { label: 'Open Positions', value: String(summary?.total_positions ?? 0), sub: 'active holdings', cls: '' },
                   ] as const).map(s => (
                     <div key={s.label} className={`${styles.statCard} glass-elevated`}>
                       <span className={styles.statLabel}>{s.label}</span>
@@ -516,7 +516,7 @@ export default function ProfilePage() {
               </button>
             </div>
 
-            {uploadError   && <p className={styles.uploadError}>{uploadError}</p>}
+            {uploadError && <p className={styles.uploadError}>{uploadError}</p>}
             {uploadSuccess && <p className={styles.uploadSuccess}>{uploadSuccess}</p>}
           </div>
 
@@ -547,7 +547,7 @@ export default function ProfilePage() {
           {/* Document list */}
           {docsLoading ? (
             <div className={styles.docsLoading}>
-              {[1,2].map(i => <div key={i} className="skeleton" style={{ height: 52, borderRadius: 8 }} />)}
+              {[1, 2].map(i => <div key={i} className="skeleton" style={{ height: 52, borderRadius: 8 }} />)}
             </div>
           ) : filteredDocs.length === 0 ? (
             <div className={styles.docsEmpty}>

@@ -56,11 +56,13 @@
 .tableWrap {
   border-radius: 14px;
   padding: 0;
-  overflow: hidden;
+  overflow-y: auto;
   flex-shrink: 0;
-  position: relative;
-  z-index: 1;
+  height: 400px; /* fixed height for scrolling */
+  display: flex;
+  flex-direction: column;
 }
+
 
 .tableHeader {
   display: flex;

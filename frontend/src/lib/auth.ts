@@ -39,7 +39,7 @@ export async function registerUser(email: string, password: string): Promise<Use
 }
 
 export async function verifyToken(token: string): Promise<{ user_id: string }> {
-  const res = await fetch(`${API_URL}/api/v1/auth/me`, {
+  const res = await fetch(`${API_URL}/api/v1/portfolio/me`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   const data = await res.json()

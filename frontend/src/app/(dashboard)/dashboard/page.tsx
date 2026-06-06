@@ -10,6 +10,9 @@ import {
   type Transaction,
   type RecommendationsResponse,
   addToWatchlist,
+  usePortfolioHistory,
+  useTransactions,
+  usePortfolioSummary,
 } from '@/lib/api'
 import MetricCard from '@/components/ui/MetricCard'
 import PnLChart from '@/components/ui/PnLChart'
@@ -18,7 +21,6 @@ import s from './dashboard.module.css'
 import RecentTrades from '@/components/ui/RecentTrades'
 import FloatingElement from '@/components/elements/FloatingElement'
 import { Shark } from '@/components/elements/shapes'
-import { PortfolioHistory } from '@/lib/api'
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 function IconWallet() {
@@ -67,31 +69,19 @@ function fmtPct(n: number): string {
 
 // ── Component ──────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const router   = useRouter()
+  const router = useRouter()
   const isAuthed = useIsAuthed()
-  const isReady  = useIsReady()
-  const token    = useToken()
+  const isReady = useIsReady()
+  const token = useToken()
 
   const API = process.env.NEXT_PUBLIC_API_URL
 
   // ── ALL hooks before any conditional return ────────────────────────────
-  const { data: portfolio, isLoading: portLoading } = useSWR<PortfolioSummary>(
-    token ? [`${API}/api/v1/portfolio/`, token] : null,
-    ([url, tok]: [string, string]) => authorizedFetcher<PortfolioSummary>(url, tok),
-    { refreshInterval: 30_000, revalidateOnFocus: true }
-  )
+  const { data: portfolio, isLoading: portLoading } = usePortfolioSummary({ refreshInterval: 30_000 })
 
-  const { data: transactions, isLoading: txLoading } = useSWR<Transaction[]>(
-    token ? [`${API}/api/v1/portfolio/transactions`, token] : null,
-    ([url, tok]: [string, string]) => authorizedFetcher<Transaction[]>(url, tok),
-    { refreshInterval: 60_000 }
-  )
+  const { data: transactions, isLoading: txLoading } = useTransactions({ refreshInterval: 60_000 })
 
-  const { data: historyData, isLoading: histLoading } = useSWR<PortfolioHistory>(
-    token ? [`${API}/api/v1/portfolio/history`, token] : null,
-    ([url, tok]: [string, string]) => authorizedFetcher<PortfolioHistory>(url, tok),
-    { refreshInterval: 60_000 }
-  )
+  const { data: historyData, isLoading: histLoading } = usePortfolioHistory({ refreshInterval: 65_000 })
 
   const { data: recData, isLoading: recLoading } = useSWR<RecommendationsResponse>(
     token ? [`${API}/api/v1/stocks/recommended`, token] : null,
@@ -108,9 +98,9 @@ export default function DashboardPage() {
   if (!isReady || !isAuthed) return null
 
   // ── Derived values ─────────────────────────────────────────────────────
-  const pnl    = portfolio?.total_pnl ?? 0
+  const pnl = portfolio?.total_pnl ?? 0
   const pnlPct = portfolio?.total_pnl_pct ?? 0
-  const trend  = pnl > 0 ? 'up' : pnl < 0 ? 'down' : 'neutral'
+  const trend = pnl > 0 ? 'up' : pnl < 0 ? 'down' : 'neutral'
 
   return (
     <div className={s.page}>
@@ -118,35 +108,39 @@ export default function DashboardPage() {
       <div className={s.metricsGrid}>
         <MetricCard
           label="Total Value"
-          value={portLoading ? '—' : fmt(portfolio?.total_value ?? 0)}
+          value={fmt(portfolio?.total_value ?? 0)}
           sub="Portfolio + cash"
           trend="neutral"
           icon={<IconWallet />}
-          loading={portLoading}
+          loading={portLoading && !portfolio}
+          refreshing={portLoading && !!portfolio}
         />
         <MetricCard
           label="Cash Balance"
-          value={portLoading ? '—' : fmt(portfolio?.cash_balance ?? 0)}
+          value={fmt(portfolio?.cash_balance ?? 0)}
           sub="Available to trade"
           trend="neutral"
           icon={<IconCash />}
-          loading={portLoading}
+          loading={portLoading && !portfolio}
+          refreshing={portLoading && !!portfolio}
         />
         <MetricCard
           label="Total P&L"
-          value={portLoading ? '—' : fmt(pnl)}
-          sub={portLoading ? undefined : `${fmtPct(pnlPct)} all time`}
+          value={fmt(pnl)}
+          sub={`${fmtPct(pnlPct)} all time`}
           trend={trend}
           icon={<IconPnL />}
-          loading={portLoading}
+          loading={portLoading && !portfolio}
+          refreshing={portLoading && !!portfolio}
         />
         <MetricCard
           label="Open Positions"
-          value={portLoading ? '—' : String(portfolio?.total_positions ?? 0)}
-          sub={portLoading ? undefined : `${portfolio?.total_trades ?? 0} total trades`}
+          value={fmt(portfolio?.total_positions ?? 0)}
+          sub={`${portfolio?.total_trades ?? 0} total trades`}
           trend="neutral"
           icon={<IconPositions />}
-          loading={portLoading}
+          loading={portLoading && !portfolio}
+          refreshing={portLoading && !!portfolio}
         />
       </div>
 

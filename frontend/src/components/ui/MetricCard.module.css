@@ -19,11 +19,9 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    transparent 60%
-  );
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      transparent 60%);
   pointer-events: none;
 }
 
@@ -73,9 +71,17 @@
   font-weight: 500;
 }
 
-.up   { color: var(--color-accent); }
-.down { color: var(--color-loss); }
-.neutral { color: rgba(255, 255, 255, 0.40); }
+.up {
+  color: var(--color-accent);
+}
+
+.down {
+  color: var(--color-loss);
+}
+
+.neutral {
+  color: rgba(255, 255, 255, 0.40);
+}
 
 /* Skeleton states */
 .skeletonValue {
@@ -89,4 +95,9 @@
   height: 14px;
   width: 45%;
   border-radius: 4px;
+}
+
+.refreshing {
+  opacity: 0.75;
+  transition: opacity 0.3s ease;
 }
