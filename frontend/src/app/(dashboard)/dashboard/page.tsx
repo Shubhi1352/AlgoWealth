@@ -1,9 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
-import { useIsAuthed, useIsReady, useToken } from '@/store/useAuthStore'
 import {
   authorizedFetcher,
   type PortfolioSummary,
@@ -21,6 +18,7 @@ import s from './dashboard.module.css'
 import RecentTrades from '@/components/ui/RecentTrades'
 import FloatingElement from '@/components/elements/FloatingElement'
 import { Shark } from '@/components/elements/shapes'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 function IconWallet() {
@@ -69,10 +67,7 @@ function fmtPct(n: number): string {
 
 // ── Component ──────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const router = useRouter()
-  const isAuthed = useIsAuthed()
-  const isReady = useIsReady()
-  const token = useToken()
+  const { token, isReady, isAuthed } = useAuthGuard()
 
   const API = process.env.NEXT_PUBLIC_API_URL
 
@@ -88,11 +83,6 @@ export default function DashboardPage() {
     ([url, tok]: [string, string]) => authorizedFetcher<RecommendationsResponse>(url, tok),
     { refreshInterval: 300_000 }
   )
-
-  // ── Auth redirect — after all hooks ───────────────────────────────────
-  useEffect(() => {
-    if (isReady && !isAuthed) router.replace('/login')
-  }, [isReady, isAuthed, router])
 
   // ── Guard — after all hooks ────────────────────────────────────────────
   if (!isReady || !isAuthed) return null

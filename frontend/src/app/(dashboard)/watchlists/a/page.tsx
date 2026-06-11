@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useIsAuthed, useIsReady, useToken } from '@/store/useAuthStore'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 import {
   useWatchlist,
   usePositions,
@@ -20,6 +19,7 @@ import { Turtle } from '@/components/elements/shapes'
 import MetricCard from '@/components/ui/MetricCard'
 import DataTable, { ColumnDef } from '@/components/ui/DataTable'
 import styles from './watchlist.module.css'
+import Image from 'next/image'
 
 function fmtPrice(n: number) {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -38,10 +38,7 @@ interface WatchlistRow {
 type ActiveList = 'a' | 'b'
 
 export default function WatchlistABPage() {
-  const router = useRouter()
-  const isAuthed = useIsAuthed()
-  const isReady = useIsReady()
-  const token = useToken()
+  const { token, isReady, isAuthed, router } = useAuthGuard()
 
   // ── all hooks before guard ────────────────────────────────────────────────
   const [activeList, setActiveList] = useState<ActiveList>('a')
@@ -95,10 +92,6 @@ export default function WatchlistABPage() {
       setEnrichingB(false)
     })
   }, [watchlistB, positions, token])
-
-  useEffect(() => {
-    if (isReady && !isAuthed) router.replace('/login')
-  }, [isReady, isAuthed, router])
 
   // ── Active rows + mutate based on toggle ──────────────────────────────────
   const rows = activeList === 'a' ? rowsA : rowsB
@@ -165,9 +158,11 @@ export default function WatchlistABPage() {
         return (
           <Link href={`/stocks/${row.entry.ticker}`} className={styles.tickerCell}>
             {logoUrl && (
-              <img
+              <Image
                 src={logoUrl}
                 alt=""
+                width={24}
+                height={24}
                 className={styles.rowLogo}
                 onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
               />

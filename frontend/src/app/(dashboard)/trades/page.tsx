@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useIsAuthed, useIsReady } from '@/store/useAuthStore'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 import {
   isManualTrade,
   useTransactions,
@@ -34,32 +33,26 @@ function fmtTime(ts: string) {
 function fmtInput(d: Date) { return d.toISOString().slice(0, 10) }
 
 function signalClass(signal: string) {
-  if (signal === 'BUY')  return styles.signalBuy
+  if (signal === 'BUY') return styles.signalBuy
   if (signal === 'SELL') return styles.signalSell
   return styles.signalHold
 }
 
 export default function TradesPage() {
-  const router   = useRouter()
-  const isAuthed = useIsAuthed()
-  const isReady  = useIsReady()
+  const { token, isReady, isAuthed, router } = useAuthGuard()
 
   // ── Filter state ──────────────────────────────────────────────────────────
   const [actionFilter, setActionFilter] = useState<ActionFilter>('ALL')
   const [tickerFilter, setTickerFilter] = useState('')
-  const [preset,       setPreset]       = useState<Preset>('1M')
-  const [lastPreset,   setLastPreset]   = useState<Preset>('1M')
-  const [customFrom,   setCustomFrom]   = useState('')
-  const [customTo,     setCustomTo]     = useState('')
+  const [preset, setPreset] = useState<Preset>('1M')
+  const [lastPreset, setLastPreset] = useState<Preset>('1M')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
 
   // ── Expanded row ──────────────────────────────────────────────────────────
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const { data: transactions, isLoading } = useTransactions({ refreshInterval: 60_000 })
-
-  useEffect(() => {
-    if (isReady && !isAuthed) router.replace('/login')
-  }, [isReady, isAuthed, router])
 
   // ── Filter logic ──────────────────────────────────────────────────────────
   const isCustomActive = !!(customFrom || customTo)
@@ -78,7 +71,7 @@ export default function TradesPage() {
       const ts = new Date(tx.timestamp)
       if (isCustomActive) {
         if (customFrom && ts < new Date(customFrom + 'T00:00:00')) return false
-        if (customTo   && ts > new Date(customTo   + 'T23:59:59')) return false
+        if (customTo && ts > new Date(customTo + 'T23:59:59')) return false
       } else {
         const cutoff = new Date()
         cutoff.setDate(cutoff.getDate() - PRESET_DAYS[preset])
@@ -91,11 +84,11 @@ export default function TradesPage() {
 
   // ── KPIs from filtered set ────────────────────────────────────────────────
   const kpis = useMemo(() => {
-    const total    = filtered.length
-    const buyVol   = filtered.filter(t => t.action === 'BUY').reduce((s, t) => s + t.total_value, 0)
-    const sellVol  = filtered.filter(t => t.action === 'SELL').reduce((s, t) => s + t.total_value, 0)
+    const total = filtered.length
+    const buyVol = filtered.filter(t => t.action === 'BUY').reduce((s, t) => s + t.total_value, 0)
+    const sellVol = filtered.filter(t => t.action === 'SELL').reduce((s, t) => s + t.total_value, 0)
     const aiTrades = filtered.filter(t => !isManualTrade(t.agent_reasoning))
-    const avgConf  = aiTrades.length
+    const avgConf = aiTrades.length
       ? aiTrades.reduce((s, t) => s + t.confidence_score, 0) / aiTrades.length
       : 0
     return { total, buyVol, sellVol, avgConf }
@@ -238,16 +231,16 @@ export default function TradesPage() {
               {/* Agent cards */}
               <div className={styles.agentCards}>
                 {[
-                  { label: 'News',        signal: ai.news_signal.signal,        summary: ai.news_signal.summary },
-                  { label: 'Technical',   signal: ai.technical_signal.signal,   summary: ai.technical_signal.summary },
+                  { label: 'News', signal: ai.news_signal.signal, summary: ai.news_signal.summary },
+                  { label: 'Technical', signal: ai.technical_signal.signal, summary: ai.technical_signal.summary },
                   { label: 'Fundamental', signal: ai.fundamental_signal.signal, summary: ai.fundamental_signal.summary },
                 ].map(agent => (
                   <div key={agent.label} className={`${styles.agentCard} glass-elevated`}>
-                     <div className={styles.agentCardHeader}>
-                       <span className={styles.agentLabel}>{agent.label}</span>
-                       <span className={signalClass(agent.signal)}>{agent.signal}</span>
-                     </div>
-                     <p className={styles.agentSummary}>{agent.summary}</p>
+                    <div className={styles.agentCardHeader}>
+                      <span className={styles.agentLabel}>{agent.label}</span>
+                      <span className={signalClass(agent.signal)}>{agent.signal}</span>
+                    </div>
+                    <p className={styles.agentSummary}>{agent.summary}</p>
                   </div>
                 ))}
               </div>

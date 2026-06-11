@@ -27,17 +27,18 @@ import {
 import FloatingElement from '@/components/elements/FloatingElement'
 import styles from './stockdetail.module.css'
 import { PirateSkull } from '@/components/elements/shapes'
+import Image from 'next/image'
 
 const API = process.env.NEXT_PUBLIC_API_URL
 
 const RESOLUTIONS = [
-  { label: '1M', days: 30  },
-  { label: '3M', days: 90  },
+  { label: '1M', days: 30 },
+  { label: '3M', days: 90 },
   { label: '6M', days: 180 },
 ] as const
 type ResLabel = typeof RESOLUTIONS[number]['label']
 
-type BtnState   = 'idle' | 'loading' | 'success' | 'error'
+type BtnState = 'idle' | 'loading' | 'success' | 'error'
 type TradeStatus = 'idle' | 'loading' | 'success' | 'error'
 
 function fmtPrice(n: number): string {
@@ -46,7 +47,7 @@ function fmtPrice(n: number): string {
 
 function fmtMarketCap(millions: number): string {
   if (millions >= 1_000_000) return `$${(millions / 1_000_000).toFixed(2)}T`
-  if (millions >= 1_000)     return `$${(millions / 1_000).toFixed(2)}B`
+  if (millions >= 1_000) return `$${(millions / 1_000).toFixed(2)}B`
   return `$${millions.toFixed(0)}M`
 }
 
@@ -56,18 +57,18 @@ function fmtPct(n: number): string {
 }
 
 function signalClass(signal: string): string {
-  if (signal === 'BUY')  return 'signal-buy'
+  if (signal === 'BUY') return 'signal-buy'
   if (signal === 'SELL') return 'signal-sell'
   return 'signal-hold'
 }
 
 export default function StockDetailPage() {
-  const params   = useParams()
-  const ticker   = (params?.ticker as string ?? '').toUpperCase()
-  const router   = useRouter()
+  const params = useParams()
+  const ticker = (params?.ticker as string ?? '').toUpperCase()
+  const router = useRouter()
   const isAuthed = useIsAuthed()
-  const isReady  = useIsReady()
-  const token    = useToken()
+  const isReady = useIsReady()
+  const token = useToken()
 
   useEffect(() => {
     if (isReady && !isAuthed) router.replace('/login')
@@ -76,11 +77,11 @@ export default function StockDetailPage() {
   // ── Chart refs + ready flag
   const roRef = useRef<ResizeObserver | null>(null)
   const chartContainerRef = useRef<HTMLDivElement>(null)
-  const chartRef          = useRef<IChartApi | null>(null)
-  const seriesRef         = useRef<ISeriesApi<'Candlestick'> | null>(null)
-  const [chartReady, setChartReady]     = useState(false)
-  const [resolution, setResolution]     = useState<ResLabel>('3M')
-  const [chartError, setChartError]     = useState(false)
+  const chartRef = useRef<IChartApi | null>(null)
+  const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
+  const [chartReady, setChartReady] = useState(false)
+  const [resolution, setResolution] = useState<ResLabel>('3M')
+  const [chartError, setChartError] = useState(false)
 
   // ── Watchlist states
   const [wlStates, setWlStates] = useState<Record<WatchlistType, BtnState>>({
@@ -88,15 +89,15 @@ export default function StockDetailPage() {
   })
 
   // ── Trade states
-  const [buyQty,    setBuyQty]    = useState('')
+  const [buyQty, setBuyQty] = useState('')
   const [buyStatus, setBuyStatus] = useState<TradeStatus>('idle')
-  const [buyMsg,    setBuyMsg]    = useState('')
-  const [sellQty,   setSellQty]   = useState('')
+  const [buyMsg, setBuyMsg] = useState('')
+  const [sellQty, setSellQty] = useState('')
   const [sellStatus, setSellStatus] = useState<TradeStatus>('idle')
-  const [sellMsg,   setSellMsg]   = useState('')
+  const [sellMsg, setSellMsg] = useState('')
 
   // ── Analyze states
-  const [showConfirm,   setShowConfirm]   = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [analyzeStatus, setAnalyzeStatus] = useState<TradeStatus>('idle')
   const [analyzeResult, setAnalyzeResult] = useState<AnalyzeResponse | null>(null)
   const [showReasoning, setShowReasoning] = useState(false)
@@ -124,7 +125,7 @@ export default function StockDetailPage() {
   const chartDays = RESOLUTIONS.find(r => r.label === resolution)?.days ?? 90
   const currentPrice = detail?.quote.current_price ?? 0
 
-  const buyCost  = buyQty  && !isNaN(parseFloat(buyQty))
+  const buyCost = buyQty && !isNaN(parseFloat(buyQty))
     ? parseFloat(buyQty) * currentPrice
     : null
 
@@ -134,62 +135,62 @@ export default function StockDetailPage() {
 
   // ── Step 1: Build chart once on mount
   useEffect(() => {
-  if (!chartContainerRef.current) return
+    if (!chartContainerRef.current) return
 
-  const container = chartContainerRef.current
+    const container = chartContainerRef.current
 
-  const timer = setTimeout(() => {
-    if (!container) return
+    const timer = setTimeout(() => {
+      if (!container) return
 
-    const chart = createChart(container, {
-      layout: {
-        background: { type: ColorType.Solid, color: 'transparent' },
-        textColor:  'rgba(255,255,255,0.6)',
-      },
-      grid: {
-        vertLines: { color: 'rgba(255,255,255,0.05)' },
-        horzLines: { color: 'rgba(255,255,255,0.05)' },
-      },
-      crosshair: {
-        vertLine: { color: 'rgba(127,255,212,0.4)' },
-        horzLine: { color: 'rgba(127,255,212,0.4)' },
-      },
-      rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)' },
-      timeScale:       { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true },
-      width:  container.clientWidth,
-      height: 380,
-    })
+      const chart = createChart(container, {
+        layout: {
+          background: { type: ColorType.Solid, color: 'transparent' },
+          textColor: 'rgba(255,255,255,0.6)',
+        },
+        grid: {
+          vertLines: { color: 'rgba(255,255,255,0.05)' },
+          horzLines: { color: 'rgba(255,255,255,0.05)' },
+        },
+        crosshair: {
+          vertLine: { color: 'rgba(127,255,212,0.4)' },
+          horzLine: { color: 'rgba(127,255,212,0.4)' },
+        },
+        rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)' },
+        timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true },
+        width: container.clientWidth,
+        height: 380,
+      })
 
-    const series = chart.addSeries(CandlestickSeries, {
-      upColor:       '#7FFFD4',
-      downColor:     '#FF6B8A',
-      borderVisible: false,
-      wickUpColor:   '#7FFFD4',
-      wickDownColor: '#FF6B8A',
-    })
+      const series = chart.addSeries(CandlestickSeries, {
+        upColor: '#7FFFD4',
+        downColor: '#FF6B8A',
+        borderVisible: false,
+        wickUpColor: '#7FFFD4',
+        wickDownColor: '#FF6B8A',
+      })
 
-    chartRef.current  = chart
-    seriesRef.current = series
+      chartRef.current = chart
+      seriesRef.current = series
 
-    roRef.current = new ResizeObserver(entries => {
-      const { width } = entries[0].contentRect
-      chart.applyOptions({ width })
-    })
-    roRef.current.observe(container)
+      roRef.current = new ResizeObserver(entries => {
+        const { width } = entries[0].contentRect
+        chart.applyOptions({ width })
+      })
+      roRef.current.observe(container)
 
-    setChartReady(true)
-  }, 50)
+      setChartReady(true)
+    }, 50)
 
-  return () => {
-    clearTimeout(timer)
-    roRef.current?.disconnect()
-    roRef.current = null
-    chartRef.current?.remove()
-    chartRef.current  = null
-    seriesRef.current = null
-    setChartReady(false)
-  }
-}, [])
+    return () => {
+      clearTimeout(timer)
+      roRef.current?.disconnect()
+      roRef.current = null
+      chartRef.current?.remove()
+      chartRef.current = null
+      seriesRef.current = null
+      setChartReady(false)
+    }
+  }, [])
 
   // ── Step 2: Load data only after chart is ready
   useEffect(() => {
@@ -227,7 +228,7 @@ export default function StockDetailPage() {
     setBuyStatus('loading')
     setBuyMsg('')
     try {
-      const result = await executeTrade({ ticker, action: 'BUY',confidence: 1.0, quantity: Number(qty), trade_type: 'manual', }, token)
+      const result = await executeTrade({ ticker, action: 'BUY', confidence: 1.0, quantity: Number(qty), trade_type: 'manual', }, token)
       setBuyStatus('success')
       setBuyMsg(`Bought ${result.quantity.toFixed(4)} shares @ $${fmtPrice(result.price)}`)
       setBuyQty('')
@@ -314,9 +315,11 @@ export default function StockDetailPage() {
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             {company.logo_url && (
-              <img
+              <Image
                 src={company.logo_url}
                 alt={`${company.name} logo`}
+                width={24}
+                height={24}
                 className={styles.companyLogo}
                 onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
@@ -488,10 +491,10 @@ export default function StockDetailPage() {
               <div className={styles.sectionLabel}>Company</div>
               <div className={styles.infoGrid}>
                 {[
-                  ['Sector',     company.sector],
+                  ['Sector', company.sector],
                   ['Market Cap', fmtMarketCap(company.market_cap)],
-                  ['Exchange',   company.exchange.split(',')[0]],
-                  ['IPO Date',   company.ipo_date],
+                  ['Exchange', company.exchange.split(',')[0]],
+                  ['IPO Date', company.ipo_date],
                 ].map(([label, value]) => (
                   <div key={label} className={styles.infoItem}>
                     <span className={styles.infoLabel}>{label}</span>
@@ -506,9 +509,9 @@ export default function StockDetailPage() {
               <div className={styles.sectionLabel}>Today&apos;s Range</div>
               <div className={styles.infoGrid}>
                 {[
-                  ['Open',       `$${fmtPrice(quote.open)}`],
-                  ['High',       `$${fmtPrice(quote.high)}`],
-                  ['Low',        `$${fmtPrice(quote.low)}`],
+                  ['Open', `$${fmtPrice(quote.open)}`],
+                  ['High', `$${fmtPrice(quote.high)}`],
+                  ['Low', `$${fmtPrice(quote.low)}`],
                   ['Prev Close', `$${fmtPrice(quote.prev_close)}`],
                 ].map(([label, value]) => (
                   <div key={label} className={styles.infoItem}>
@@ -525,9 +528,9 @@ export default function StockDetailPage() {
                 <div className={styles.sectionLabel}>Your Position</div>
                 <div className={styles.infoGrid}>
                   {[
-                    ['Shares',         position.quantity.toFixed(4)],
-                    ['Avg Cost',       `$${fmtPrice(position.avg_buy_price)}`],
-                    ['Current Value',  `$${fmtPrice(position.current_value)}`],
+                    ['Shares', position.quantity.toFixed(4)],
+                    ['Avg Cost', `$${fmtPrice(position.avg_buy_price)}`],
+                    ['Current Value', `$${fmtPrice(position.current_value)}`],
                   ].map(([label, value]) => (
                     <div key={label} className={styles.infoItem}>
                       <span className={styles.infoLabel}>{label}</span>
@@ -608,8 +611,8 @@ export default function StockDetailPage() {
             {/* Agent cards */}
             <div className={styles.agentRow}>
               {[
-                { label: 'News',        signal: analyzeResult.news_signal.signal,        summary: analyzeResult.news_signal.summary },
-                { label: 'Technical',   signal: analyzeResult.technical_signal.signal,   summary: analyzeResult.technical_signal.summary },
+                { label: 'News', signal: analyzeResult.news_signal.signal, summary: analyzeResult.news_signal.summary },
+                { label: 'Technical', signal: analyzeResult.technical_signal.signal, summary: analyzeResult.technical_signal.summary },
                 { label: 'Fundamental', signal: analyzeResult.fundamental_signal.signal, summary: analyzeResult.fundamental_signal.summary },
               ].map(agent => (
                 <div key={agent.label} className={`${styles.agentCard} glass-elevated`}>

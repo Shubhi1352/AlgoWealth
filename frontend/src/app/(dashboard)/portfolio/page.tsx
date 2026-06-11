@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useMemo } from 'react'
 import Link from 'next/link'
-import { useIsAuthed, useIsReady } from '@/store/useAuthStore'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 import {
   usePositions,
   usePortfolioSummary,
@@ -26,18 +25,11 @@ function fmtPct(n: number) {
 }
 
 export default function PortfolioPage() {
-  const router = useRouter()
-  const isAuthed = useIsAuthed()
-  const isReady = useIsReady()
+  const { token, isReady, isAuthed } = useAuthGuard()
 
-  // ── all hooks before guard ────────────────────────────────────────────────
   const { data: summary, isLoading: summaryLoading } = usePortfolioSummary({ refreshInterval: 30_000 })
   const { data: positions, isLoading: posLoading } = usePositions({ refreshInterval: 33_000 })
   const { data: history, isLoading: histLoading } = usePortfolioHistory({ refreshInterval: 60_000 })
-
-  useEffect(() => {
-    if (isReady && !isAuthed) router.replace('/login')
-  }, [isReady, isAuthed, router])
 
   const snapshots = history?.history ?? []
   const totalValue = summary?.total_value ?? 0

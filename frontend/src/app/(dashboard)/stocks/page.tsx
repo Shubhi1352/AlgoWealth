@@ -1,18 +1,17 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { useIsAuthed, useIsReady, useToken } from '@/store/useAuthStore'
 import { authorizedFetcher, type StockDetail } from '@/lib/api'
 import { SEED_TICKERS, TOTAL_PAGES, PAGE_SIZE, getPage } from '@/lib/tickers'
 import StockCard from '@/components/ui/StockCard'
 import FloatingElement from '@/components/elements/FloatingElement'
 import { Lighthouse } from '@/components/elements/shapes'
 import styles from './stocks.module.css'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 
-const API            = process.env.NEXT_PUBLIC_API_URL
-const RECENT_KEY     = 'aw_recent_searches'
-const MAX_RECENT     = 5
+const API = process.env.NEXT_PUBLIC_API_URL
+const RECENT_KEY = 'aw_recent_searches'
+const MAX_RECENT = 5
 
 function loadRecent(): string[] {
   if (typeof window === 'undefined') return []
@@ -24,7 +23,7 @@ function loadRecent(): string[] {
 }
 
 function saveRecent(ticker: string): string[] {
-  const prev    = loadRecent()
+  const prev = loadRecent()
   const updated = [ticker, ...prev.filter(t => t !== ticker)].slice(0, MAX_RECENT)
   localStorage.setItem(RECENT_KEY, JSON.stringify(updated))
   return updated
@@ -35,27 +34,19 @@ function saveRecent(ticker: string): string[] {
 // The StockCard component handles its own SWR for the grid browse mode.
 
 interface SearchState {
-  status:  'idle' | 'loading' | 'success' | 'error'
-  ticker:  string
+  status: 'idle' | 'loading' | 'success' | 'error'
+  ticker: string
   message: string
 }
 
 export default function StocksPage() {
-  const router   = useRouter()
-  const isAuthed = useIsAuthed()
-  const isReady  = useIsReady()
-  const token    = useToken()
-
-  // ── Auth guard
-  useEffect(() => {
-    if (isReady && !isAuthed) router.replace('/login')
-  }, [isReady, isAuthed, router])
+  const { token, isReady, isAuthed, router } = useAuthGuard()
 
   // ── Page state
-  const [currentPage,    setCurrentPage]    = useState(1)
+  const [currentPage, setCurrentPage] = useState(1)
   const [expandedTicker, setExpandedTicker] = useState<string | null>(null)
-  const [query,          setQuery]          = useState('')
-  const [searchState,    setSearchState]    = useState<SearchState>({
+  const [query, setQuery] = useState('')
+  const [searchState, setSearchState] = useState<SearchState>({
     status: 'idle', ticker: '', message: '',
   })
   const [recentSearches, setRecentSearches] = useState<string[]>([])
@@ -67,7 +58,7 @@ export default function StocksPage() {
   }, [])
 
   // ── Derived
-  const mode         = searchState.status !== 'idle' ? 'search' : 'browse'
+  const mode = searchState.status !== 'idle' ? 'search' : 'browse'
   const currentTickers = getPage(currentPage)
 
   // ── Handlers
@@ -98,7 +89,7 @@ export default function StocksPage() {
       setRecentSearches(saveRecent(ticker))
     } catch {
       setSearchState({
-        status:  'error',
+        status: 'error',
         ticker,
         message: `Could not find "${ticker}". Check the ticker and try again.`,
       })

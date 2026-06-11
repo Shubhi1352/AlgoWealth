@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useIsAuthed, useIsReady, useToken } from '@/store/useAuthStore'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 import {
   useWatchlist,
   usePositions,
@@ -20,6 +19,7 @@ import { TreasureChest } from '@/components/elements/shapes'
 import MetricCard from '@/components/ui/MetricCard'
 import DataTable, { ColumnDef } from '@/components/ui/DataTable'
 import styles from './automated.module.css'
+import Image from 'next/image'
 
 function fmtPrice(n: number) {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -37,10 +37,7 @@ interface WatchlistRow {
 }
 
 export default function AutomatedWatchlistPage() {
-  const router = useRouter()
-  const isAuthed = useIsAuthed()
-  const isReady = useIsReady()
-  const token = useToken()
+  const { token, isReady, isAuthed, router } = useAuthGuard()
 
   // ── all hooks before guard ────────────────────────────────────────────────
   const [rows, setRows] = useState<WatchlistRow[]>([])
@@ -87,10 +84,6 @@ export default function AutomatedWatchlistPage() {
       setEnriching(false)
     })
   }, [watchlist, positions, token])
-
-  useEffect(() => {
-    if (isReady && !isAuthed) router.replace('/login')
-  }, [isReady, isAuthed, router])
 
   // ── KPIs ─────────────────────────────────────────────────────────────────
   const totalInvested = rows.reduce((sum, r) =>
@@ -180,9 +173,11 @@ export default function AutomatedWatchlistPage() {
         return (
           <Link href={`/stocks/${row.entry.ticker}`} className={styles.tickerCell}>
             {logoUrl && (
-              <img
+              <Image
                 src={logoUrl}
                 alt=""
+                width={24}
+                height={24}
                 className={styles.rowLogo}
                 onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
               />

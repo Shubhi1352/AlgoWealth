@@ -1,12 +1,9 @@
 'use client'
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 import {
-  useIsAuthed,
-  useIsReady,
-  useToken,
   useUser,
   useAuthStore,
 } from '@/store/useAuthStore'
@@ -67,10 +64,7 @@ function savePrefs(prefs: UserPrefs): void {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function ProfilePage() {
-  const router = useRouter()
-  const isAuthed = useIsAuthed()
-  const isReady = useIsReady()
-  const token = useToken()
+  const { token, isReady, isAuthed, router } = useAuthGuard()
   const user = useUser()
   const logout = useAuthStore(s => s.logout)
 
@@ -117,11 +111,6 @@ export default function ProfilePage() {
     ([, tok]: [string, string]) => fetchDocuments(tok),
     { revalidateOnFocus: false }
   )
-
-  // ── Auth guard ──────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (isReady && !isAuthed) router.replace('/login')
-  }, [isReady, isAuthed, router])
 
   // ── Load prefs ──────────────────────────────────────────────────────────────
   useEffect(() => {

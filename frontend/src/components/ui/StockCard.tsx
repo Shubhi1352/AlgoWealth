@@ -11,6 +11,7 @@ import {
   type WatchlistType,
 } from '@/lib/api'
 import styles from './StockCard.module.css'
+import Image from 'next/image'
 
 const API = process.env.NEXT_PUBLIC_API_URL
 
@@ -20,9 +21,9 @@ type BtnState = 'idle' | 'loading' | 'success' | 'error'
 
 interface WatchlistBtnProps {
   label: string
-  list:  WatchlistType
+  list: WatchlistType
   ticker: string
-  token:  string
+  token: string
 }
 
 function WatchlistBtn({ label, list, ticker, token }: WatchlistBtnProps) {
@@ -41,10 +42,10 @@ function WatchlistBtn({ label, list, ticker, token }: WatchlistBtnProps) {
   }, [state, ticker, list, token])
 
   const content: Record<BtnState, string> = {
-    idle:    label,
+    idle: label,
     loading: '...',
     success: '✓ Added',
-    error:   '✗ Failed',
+    error: '✗ Failed',
   }
 
   return (
@@ -96,10 +97,10 @@ function UnavailableCard({ ticker }: { ticker: string }) {
 // ─── Main card ────────────────────────────────────────────────────────────────
 
 interface StockCardProps {
-  ticker:   string
-  label:    string   // fallback display name
-  sector:   string
-  isExpanded:  boolean
+  ticker: string
+  label: string   // fallback display name
+  sector: string
+  isExpanded: boolean
   onExpand: (ticker: string) => void
 }
 
@@ -117,7 +118,7 @@ export default function StockCard({
     ([url, tok]: [string, string]) => authorizedFetcher<StockDetail>(url, tok),
     {
       revalidateOnFocus: false,    // price is cached 5min on backend anyway
-      dedupingInterval:  300_000,  // match backend Redis TTL — no redundant calls
+      dedupingInterval: 300_000,  // match backend Redis TTL — no redundant calls
     }
   )
 
@@ -156,15 +157,17 @@ export default function StockCard({
         <div className={styles.header}>
           <div className={styles.logoWrap}>
             {company.logo_url ? (
-              <img
-                src={company.logo_url}
-                alt={`${company.name} logo`}
-                className={styles.logo}
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none'
-                  e.currentTarget.nextElementSibling?.classList.remove(styles.hidden)
-                }}
-              />
+              <Image
+                  src={company.logo_url}
+                  alt={`${company.name} logo`}
+                  width={24}
+                  height={24}
+                  className={styles.logo}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                    e.currentTarget.nextElementSibling?.classList.remove(styles.hidden)
+                  }}
+                />
             ) : null}
             <span className={`${styles.logoFallback} ${company.logo_url ? styles.hidden : ''}`}>
               {ticker.slice(0, 2)}
@@ -207,8 +210,8 @@ export default function StockCard({
               {token && (
                 <>
                   <WatchlistBtn label="Automated" list="automated" ticker={ticker} token={token} />
-                  <WatchlistBtn label="List A"     list="a"         ticker={ticker} token={token} />
-                  <WatchlistBtn label="List B"     list="b"         ticker={ticker} token={token} />
+                  <WatchlistBtn label="List A" list="a" ticker={ticker} token={token} />
+                  <WatchlistBtn label="List B" list="b" ticker={ticker} token={token} />
                 </>
               )}
               <Link
