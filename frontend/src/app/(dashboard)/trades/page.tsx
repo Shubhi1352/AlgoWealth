@@ -231,9 +231,9 @@ export default function TradesPage() {
               {/* Agent cards */}
               <div className={styles.agentCards}>
                 {[
-                  { label: 'News', signal: ai.news_signal.signal, summary: ai.news_signal.summary },
-                  { label: 'Technical', signal: ai.technical_signal.signal, summary: ai.technical_signal.summary },
-                  { label: 'Fundamental', signal: ai.fundamental_signal.signal, summary: ai.fundamental_signal.summary },
+                  { label: 'News', signal: ai.news_signal?.signal ?? 'N/A', summary: ai.news_signal?.summary ?? 'No data available' },
+                  { label: 'Technical', signal: ai.technical_signal?.signal ?? 'N/A', summary: ai.technical_signal?.summary ?? 'No data available' },
+                  { label: 'Fundamental', signal: ai.fundamental_signal?.signal ?? 'N/A', summary: ai.fundamental_signal?.summary ?? 'No data available' },
                 ].map(agent => (
                   <div key={agent.label} className={`${styles.agentCard} glass-elevated`}>
                     <div className={styles.agentCardHeader}>
@@ -246,7 +246,7 @@ export default function TradesPage() {
               </div>
 
               {/* News articles */}
-              {ai.news_signal.articles && ai.news_signal.articles.length > 0 && (
+              {ai.news_signal?.articles && ai.news_signal.articles.length > 0 && (
                 <div className={styles.articles}>
                   <span className={styles.articlesLabel}>Sources</span>
                   <div className={styles.articlesList}>

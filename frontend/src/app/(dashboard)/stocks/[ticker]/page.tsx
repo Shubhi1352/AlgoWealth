@@ -472,7 +472,7 @@ export default function StockDetailPage() {
                 {/* AI Analyze */}
                 <button
                   className={styles.analyzeBtn}
-                  onClick={() => setShowConfirm(true)}
+                  onClick={handleAnalyze}
                   disabled={analyzeStatus === 'loading'}
                 >
                   {analyzeStatus === 'loading'
@@ -551,28 +551,6 @@ export default function StockDetailPage() {
         </div>
       </div>
 
-      {/* ── Confirmation modal ── */}
-      {showConfirm && (
-        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
-          <div className={styles.modal}>
-            <div className={styles.modalIcon}>⚡</div>
-            <h2 className={styles.modalTitle}>Analyze {ticker}?</h2>
-            <p className={styles.modalBody}>
-              The AI agent will analyze <strong>{ticker}</strong> across news, technical,
-              and fundamental signals. If confidence is <strong>≥ 50%</strong>, a trade
-              will be executed automatically.
-            </p>
-            <div className={styles.modalActions}>
-              <button className="btn btn-ghost-white" onClick={() => setShowConfirm(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-accent" onClick={handleAnalyze}>
-                Analyze &amp; Trade
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {/* ── Reasoning modal ── */}
       {showReasoning && analyzeResult && (
         <div

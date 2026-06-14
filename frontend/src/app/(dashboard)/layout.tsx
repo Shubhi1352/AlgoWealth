@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Sidebar from '@/components/sidebar/Sidebar'
 import MarketStatus from '@/components/MarketStatus'
 import s from './layout.module.css'
+import ChatWidget from '@/components/chat/ChatWidget'
 
 export default function DashboardLayout({
   children,
@@ -36,6 +37,9 @@ export default function DashboardLayout({
 
       {/* ── Market status pill ── */}
       <MarketStatus />
+
+      {/* ── Chat widget ── */}
+      <ChatWidget />
     </>
   )
 }

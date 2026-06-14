@@ -82,10 +82,13 @@ async def _process_user_watchlist(db, user_id: str, market_open: bool) -> None:
     from app.services.trade_queue_service import TradeQueueService
     from app.services.portfolio_service import execute_trade
     from app.agents.graph import run_agent_pipeline   # Your existing LangGraph pipeline
-    from app.db.mongodb import USERS_COLLECTION
+    from app.db.mongodb import get_database
 
     watchlist_service = WatchlistService(db)
     queue_service = TradeQueueService(db)
+    USERS_COLLECTION = "users"
+
+    db = get_database()
 
     user = await db[USERS_COLLECTION].find_one({"id": user_id})
     if not user:
@@ -102,11 +105,12 @@ async def _process_user_watchlist(db, user_id: str, market_open: bool) -> None:
             print(f"    🔍 Analyzing {ticker}...")
 
             # ── Run full agent pipeline ────────────────────────────────────────
-            result = await run_agent_pipeline(ticker=ticker, user_id=user_id, risk_appetite=risk_appetite)
+            result = await run_agent_pipeline(ticker=ticker, user_id=user_id, risk_appetite=risk_appetite, auto_execute=True)
 
             decision = result.get("decision")
             confidence = result.get("confidence", 0.0)
             reasoning = result.get("agent_reasoning", {})
+            auto_execute = result.get("auto_execute", False)
 
             print(f"    📊 {ticker}: {decision} (confidence: {confidence:.0%})")
 
@@ -116,7 +120,7 @@ async def _process_user_watchlist(db, user_id: str, market_open: bool) -> None:
                 continue
 
             # ── BUY/SELL → execute or queue ────────────────────────────────────
-            if market_open:
+            if auto_execute and market_open:
                 await execute_trade(
                     user_id=user_id,
                     ticker=ticker,

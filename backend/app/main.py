@@ -81,6 +81,7 @@ def create_app() -> FastAPI:
     from app.api.v1.stocks import router as stocks_router
     from app.api.v1.portfolio import router as portfolio_router
     from app.api.v1.watchlists import router as watchlists_router
+    from app.api.v1.chat import router as chat_router
 
     app.include_router(health_router,     prefix="/api/v1",            tags=["health"])
     app.include_router(auth_router,       prefix="/api/v1/auth",       tags=["auth"])
@@ -88,6 +89,7 @@ def create_app() -> FastAPI:
     app.include_router(stocks_router,     prefix="/api/v1/stocks",     tags=["stocks"])
     app.include_router(portfolio_router,  prefix="/api/v1/portfolio",  tags=["portfolio"])
     app.include_router(watchlists_router, prefix="/api/v1/watchlists", tags=["watchlists"])
+    app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])
 
     return app
 

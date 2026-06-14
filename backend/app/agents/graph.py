@@ -45,7 +45,7 @@ def build_trading_graph() -> StateGraph:
 # Module-level compiled graph — built once, invoked many times
 trading_graph = build_trading_graph()
 
-async def run_agent_pipeline(ticker: str, user_id: str, risk_appetite: str = "Moderate") -> dict:
+async def run_agent_pipeline(ticker: str, user_id: str, risk_appetite: str = "Moderate", auto_execute: bool = False) -> dict:
     result = await trading_graph.ainvoke({
         "ticker":        ticker,
         "user_id":       user_id,
@@ -77,4 +77,5 @@ async def run_agent_pipeline(ticker: str, user_id: str, risk_appetite: str = "Mo
         "fundamental_signal": result["fundamental_signal"],
         "technical_signal":   result["technical_signal"],
         "agent_reasoning":    agent_reasoning,
+        "auto_execute":       auto_execute,
     }

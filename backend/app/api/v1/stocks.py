@@ -54,10 +54,10 @@ async def analyze_stock(
     risk_appetite = (user or {}).get("risk_appetite", "Moderate")
 
     try:
-        result = await run_agent_pipeline(ticker=ticker, user_id=user_id, risk_appetite=risk_appetite)
+        result = await run_agent_pipeline(ticker=ticker, user_id=user_id, risk_appetite=risk_appetite, auto_execute=False)
 
         transaction = None
-        if result["decision"] in ("BUY", "SELL"):
+        if result["auto_execute"] and result["decision"] in ("BUY", "SELL"):
             try:
                 transaction = await execute_trade(
                     user_id=user_id,

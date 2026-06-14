@@ -110,6 +110,9 @@ async def _execute_stop_loss_sell(
             f"Stop loss triggered: price ${current_price:.2f} fell below "
             f"floor ${stop_loss_price:.2f}"
         ),
+        "news_signal":        {"signal": "SELL", "summary": "Stop loss triggered — automated exit."},
+        "technical_signal":   {"signal": "SELL", "summary": f"Price ${current_price:.2f} breached stop floor ${stop_loss_price:.2f}."},
+        "fundamental_signal": {"signal": "SELL", "summary": "Position closed by stop loss protection."},
     }
 
     await execute_trade(
